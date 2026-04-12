@@ -161,7 +161,7 @@ export function HeroSection() {
             animate={{ opacity: [1, 0.4, 1], boxShadow: ["0 0 6px #06B6D4", "0 0 0px #06B6D4", "0 0 6px #06B6D4"] }}
             transition={{ duration: 2, repeat: Infinity }}
           />
-          NEPALIX OS 2.0 is Live
+          The Commerce OS for Nepal
         </motion.div>
 
         {/* Main headline */}
@@ -172,7 +172,7 @@ export function HeroSection() {
           className="font-heading font-extrabold text-white mb-7 leading-[1.04]"
           style={{ fontSize: "clamp(3.2rem, 7vw, 5.8rem)", letterSpacing: "-0.02em" }}
         >
-          The Commerce OS
+          Run Your Entire Business
           <br />
           <span
             style={{
@@ -182,7 +182,7 @@ export function HeroSection() {
               backgroundClip: "text",
             }}
           >
-            Built for Nepal
+            From One System
           </span>
         </motion.h1>
 
@@ -194,8 +194,8 @@ export function HeroSection() {
           className="text-xl leading-[1.72] mb-14 max-w-xl"
           style={{ color: "rgba(255,255,255,0.42)" }}
         >
-          Power your online store, point-of-sale, inventory, and payments with a
-          global-standard platform rooted in Kathmandu.
+          Online + offline selling, payments, inventory, and logistics — all
+          from a single infrastructure.
         </motion.p>
 
         {/* CTA buttons */}
@@ -206,7 +206,7 @@ export function HeroSection() {
           className="flex gap-4 flex-wrap justify-center mb-20"
         >
           <GradientButton href="/book-demo" size="lg">
-            Book a Free Demo
+            Start Selling Online →
           </GradientButton>
           <GradientButton href="/product" variant="ghost" size="lg">
             Explore Platform

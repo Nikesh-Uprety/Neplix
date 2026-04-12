@@ -1,0 +1,148 @@
+{
+  "colorScheme": "light",
+  "fonts": [
+    {
+      "family": "Inter",
+      "role": "body"
+    },
+    {
+      "family": "Roboto",
+      "role": "unknown"
+    }
+  ],
+  "colors": {
+    "primary": "#6B26D9",
+    "secondary": "#9CA3AF",
+    "accent": "#6B26D9",
+    "background": "#FFFFFF",
+    "textPrimary": "#17171C",
+    "link": "#E9F9EF"
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "Inter",
+      "heading": "Inter"
+    },
+    "fontStacks": {
+      "heading": [
+        "Inter",
+        "system-ui",
+        "-apple-system",
+        "BlinkMacSystemFont",
+        "Segoe UI",
+        "Roboto",
+        "sans-serif"
+      ],
+      "body": [
+        "Inter",
+        "system-ui",
+        "-apple-system",
+        "BlinkMacSystemFont",
+        "Segoe UI",
+        "Roboto",
+        "sans-serif"
+      ],
+      "paragraph": [
+        "Inter",
+        "system-ui",
+        "-apple-system",
+        "BlinkMacSystemFont",
+        "Segoe UI",
+        "Roboto",
+        "sans-serif"
+      ]
+    },
+    "fontSizes": {
+      "h1": "60px",
+      "h2": "48px",
+      "body": "20px"
+    }
+  },
+  "spacing": {
+    "baseUnit": 4,
+    "borderRadius": "10px"
+  },
+  "components": {
+    "buttonPrimary": {
+      "background": "#6B26D9",
+      "textColor": "#FFFFFF",
+      "borderRadius": "12px",
+      "borderRadiusCorners": {
+        "topLeft": "12px",
+        "topRight": "12px",
+        "bottomRight": "12px",
+        "bottomLeft": "12px"
+      },
+      "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(107, 38, 217, 0.3) 0px 0px 40px 0px"
+    },
+    "buttonSecondary": {
+      "background": "#FFFFFF",
+      "textColor": "#FFFFFF",
+      "borderColor": "#FFFFFF",
+      "borderRadius": "12px",
+      "borderRadiusCorners": {
+        "topLeft": "12px",
+        "topRight": "12px",
+        "bottomRight": "12px",
+        "bottomLeft": "12px"
+      },
+      "shadow": "none"
+    }
+  },
+  "images": {
+    "logo": "File saved at: attached_assets/logo.svg",
+    "favicon": null,
+    "ogImage": "https://blanxer.com/og_images/landing-image.png",
+    "logoHref": "File saved at: attached_assets/logoHref.html",
+    "logoAlt": "Blanxer"
+  },
+  "__llm_logo_reasoning": {
+    "selectedIndex": 0,
+    "reasoning": "Selected #0 because it is visible, located in the header, and matches the brand name 'Blanxer'.",
+    "confidence": 0.9,
+    "source": "llm"
+  },
+  "__llm_button_reasoning": {
+    "primary": {
+      "index": 0,
+      "text": "Start Selling Online",
+      "reasoning": "Button #0 'Start Selling Online' uses the brand's vibrant primary color (#6B26D9) and has strong action-oriented text, making it the primary CTA."
+    },
+    "secondary": {
+      "index": 2,
+      "text": "Book a Demo",
+      "reasoning": "Button #2 'Book a Demo' has a different background color (#FFFFFF) and serves as a secondary action, complementing the primary CTA."
+    },
+    "confidence": 0.95
+  },
+  "personality": {
+    "tone": "modern",
+    "energy": "medium",
+    "targetAudience": "businesses in Nepal looking for e-commerce solutions"
+  },
+  "designSystem": {
+    "framework": "tailwind",
+    "componentLibrary": ""
+  },
+  "confidence": {
+    "buttons": 0.95,
+    "colors": 0.9,
+    "overall": 0.925
+  },
+  "__llm_metadata": {
+    "logoSelection": {
+      "llmCalled": true,
+      "llmSucceeded": true,
+      "finalSource": "llm",
+      "rawLogoSelection": {
+        "selectedLogoIndex": 0,
+        "selectedLogoReasoning": "Selected #0 because it is visible, located in the header, and matches the brand name 'Blanxer'.",
+        "confidence": 0.9
+      }
+    },
+    "buttonClassification": {
+      "llmCalled": true,
+      "llmSucceeded": true
+    }
+  }
+}
