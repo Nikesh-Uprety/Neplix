@@ -1,20 +1,22 @@
+import { useRef } from "react";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { HeroSection } from "@/components/sections/HeroSection";
-import { ValuePropsSection } from "@/components/sections/ValuePropsSection";
-import { FeaturesGridSection } from "@/components/sections/FeaturesGridSection";
+import { OpportunitySection } from "@/components/sections/OpportunitySection";
+import { PlatformShowcase } from "@/components/sections/PlatformShowcase";
 import { HowItWorksSection } from "@/components/sections/HowItWorksSection";
 import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
 import { CtaStripSection } from "@/components/sections/CtaStripSection";
-import { ProofBlockSection } from "@/components/sections/ProofBlockSection";
+import { SocialProofBanner } from "@/components/sections/SocialProofBanner";
+import { ParallaxMetricsSection } from "@/components/sections/ParallaxMetricsSection";
 
 export default function Home() {
   return (
-    <div className="pt-20">
+    <div className="overflow-x-hidden">
       <HeroSection />
-      
-      <ProofBlockSection />
-
-      <ValuePropsSection />
-      <FeaturesGridSection />
+      <SocialProofBanner />
+      <OpportunitySection />
+      <PlatformShowcase />
+      <ParallaxMetricsSection />
       <HowItWorksSection />
       <TestimonialsSection />
       <CtaStripSection />

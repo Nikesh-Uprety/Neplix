@@ -1,28 +1,83 @@
-import { SectionWrapper } from "../ui-custom/SectionWrapper";
+import { motion } from "framer-motion";
 import { GradientButton } from "../ui-custom/GradientButton";
+import { Shield, Zap, MessageCircle } from "lucide-react";
 
 export function CtaStripSection() {
   return (
-    <SectionWrapper className="!py-0 mb-24">
-      <div className="relative rounded-3xl overflow-hidden border border-white/20 bg-gradient-to-br from-[#06B6D4]/20 via-[#3B82F6]/20 to-[#8B5CF6]/20">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-20" />
-        <div className="absolute inset-0 backdrop-blur-xl bg-[#070B14]/40" />
-        
-        <div className="relative z-10 px-8 py-20 md:py-24 text-center max-w-3xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Ready to grow your business?</h2>
-          <p className="text-xl text-gray-300 mb-10">
-            Join thousands of Nepali businesses scaling with NEPALIX. Try it free for 14 days. No credit card required.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <GradientButton href="/book-demo" size="lg">
-              Start Free Trial
-            </GradientButton>
-            <GradientButton href="/contact" variant="ghost" size="lg">
-              Talk to Sales
-            </GradientButton>
-          </div>
-        </div>
+    <section className="relative py-28 overflow-hidden bg-[#070B14]">
+      {/* Background gradient */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse at 50% 100%, rgba(6,182,212,0.12) 0%, rgba(139,92,246,0.08) 40%, transparent 70%)",
+          }}
+        />
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: "linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)",
+            backgroundSize: "50px 50px",
+          }}
+        />
       </div>
-    </SectionWrapper>
+
+      <div className="container mx-auto px-4 relative z-10 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <div className="text-4xl mb-4">🇳🇵</div>
+          <h2 className="text-5xl md:text-7xl font-extrabold text-white font-heading mb-5 leading-[1.05]">
+            Nepal's commerce future{" "}
+            <span
+              style={{
+                background: "linear-gradient(135deg, #06B6D4, #8B5CF6, #EC4899)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              starts here
+            </span>
+          </h2>
+          <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
+            Join 5,000+ Nepali merchants already growing with NEPALIX. Your store could be live by tonight.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
+            <GradientButton href="/book-demo" size="lg">
+              Start Free 14-Day Trial
+            </GradientButton>
+            <a
+              href="https://wa.me/9779801234567"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border border-white/20 text-white font-medium text-sm hover:bg-white/5 transition-colors"
+            >
+              <MessageCircle className="w-4 h-4 text-green-400" />
+              Chat on WhatsApp
+            </a>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-6 text-sm">
+            <div className="flex items-center gap-2 text-gray-400">
+              <Shield className="w-4 h-4 text-green-400" />
+              30-Day Money Back Guarantee
+            </div>
+            <div className="flex items-center gap-2 text-gray-400">
+              <Zap className="w-4 h-4 text-yellow-400" />
+              No credit card required
+            </div>
+            <div className="flex items-center gap-2 text-gray-400">
+              🔒 Bank-grade security
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </section>
   );
 }
