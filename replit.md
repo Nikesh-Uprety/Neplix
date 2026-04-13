@@ -21,11 +21,12 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 ### NEPALIX (`artifacts/nepalix`) — Main Web App
 - **Type**: React + Vite (frontend-only)
 - **Preview path**: `/`
-- **Description**: Full marketing website for NEPALIX, a Nepal-first SaaS commerce platform
+- **Description**: Full marketing website for NEPALIX, a Nepal-first SaaS commerce platform and commerce OS, now featuring Rare Atelier as the active live case study
 - **Tech**: React, Vite, Tailwind CSS, Framer Motion, wouter, shadcn/ui, lucide-react
 - **Pages**: Home, Product, Pricing, Solutions, Plugins, Case Studies, Compare, About, Book Demo, Contact, Docs
 - **Brand**: Dark-modern (#070B14 base), neon cyan/blue/purple gradients, glassmorphism cards
 - **Fonts**: Sora (headings), Inter (body)
+- **Current focus**: 3D landing page hero uses actual Rare Atelier platform screenshots for analytics, inventory, orders, POS, bills, customers, store users, marketing, canvas customization, and products
 
 ### API Server (`artifacts/api-server`)
 - Express 5 API server with Zod validation and Drizzle ORM

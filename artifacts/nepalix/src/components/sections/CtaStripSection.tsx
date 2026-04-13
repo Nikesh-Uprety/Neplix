@@ -30,7 +30,7 @@ export function CtaStripSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <div className="text-4xl mb-4">🇳🇵</div>
+          <div className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300 mb-4">Built in Nepal</div>
           <h2 className="text-5xl md:text-7xl font-extrabold text-white font-heading mb-5 leading-[1.05]">
             Nepal's commerce future{" "}
             <span
@@ -73,7 +73,7 @@ export function CtaStripSection() {
               No credit card required
             </div>
             <div className="flex items-center gap-2 text-gray-400">
-              🔒 Bank-grade security
+              Bank-grade security
             </div>
           </div>
         </motion.div>

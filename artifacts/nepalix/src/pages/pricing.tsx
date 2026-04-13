@@ -262,7 +262,7 @@ export default function Pricing() {
                 Free bonuses for first 100 signups
               </div>
               <div className="flex items-center gap-2 text-cyan-400">
-                ⚡ Launch offer — save up to 25% annually
+                Launch offer — save up to 25% annually
               </div>
             </div>
           </motion.div>
@@ -298,7 +298,7 @@ export default function Pricing() {
                 >
                   {plan.popular && (
                     <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] text-white text-xs font-bold whitespace-nowrap">
-                      Most Popular 🚀
+                      Most Popular
                     </div>
                   )}
 
@@ -356,7 +356,7 @@ export default function Pricing() {
                   {/* Bonuses */}
                   <div className="px-6 mt-4">
                     <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                      🎁 Bonuses Included
+                      Bonuses Included
                     </div>
                     <ul className="space-y-1.5 mb-5">
                       {plan.bonuses.map((b, bi) => (
@@ -389,10 +389,10 @@ export default function Pricing() {
           {/* Risk reducers */}
           <div className="flex flex-wrap justify-center gap-6 mt-10 text-sm text-gray-500">
             {[
-              "✅ 30-Day Money Back Guarantee",
-              "🔒 No coding required",
-              "⚡ Setup in under 30 minutes",
-              "📞 Cancel anytime",
+              "30-Day Money Back Guarantee",
+              "No coding required",
+              "Setup in under 30 minutes",
+              "Cancel anytime",
             ].map((t, i) => (
               <motion.span
                 key={i}

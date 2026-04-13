@@ -67,7 +67,7 @@ export function OpportunitySection() {
       <div className="container mx-auto px-4 relative z-10">
         <motion.div style={{ y: textY, opacity }} className="text-center mb-20">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-[#84CC16]/30 mb-6 text-sm font-medium text-[#84CC16]">
-            🇳🇵 The Nepal Opportunity
+            The Nepal Opportunity
           </div>
           <h2 className="text-5xl md:text-7xl font-extrabold text-white mb-6 font-heading leading-[1.05]">
             The biggest commerce

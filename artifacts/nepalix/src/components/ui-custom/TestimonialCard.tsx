@@ -29,7 +29,7 @@ export function TestimonialCard({ quote, name, company, avatar, rating = 5 }: Te
         <div>
           <h4 className="font-heading font-semibold text-white">{name}</h4>
           <p className="text-sm text-[#06B6D4] flex items-center gap-1">
-            {company} 🇳🇵
+            {company}
           </p>
         </div>
       </div>

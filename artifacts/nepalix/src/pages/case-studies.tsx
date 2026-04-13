@@ -1,10 +1,32 @@
 import { motion } from "framer-motion";
-import { TrendingUp, Users, ShoppingBag, Clock, ArrowRight, Quote } from "lucide-react";
+import { TrendingUp, Users, ShoppingBag, Clock, ArrowRight, Quote, ExternalLink } from "lucide-react";
 import { SectionWrapper } from "@/components/ui-custom/SectionWrapper";
 import { GlassCard } from "@/components/ui-custom/GlassCard";
 import { GradientButton } from "@/components/ui-custom/GradientButton";
 
+import rareImg from "@assets/image_1776100592841.png"; // Using one of the screenshots as a hero image for the case study
+
 const caseStudies = [
+  {
+    company: "Rare Atelier",
+    industry: "High-End Fashion Retail",
+    location: "Kathmandu & Online",
+    logo: "RA",
+    logoColor: "#06B6D4",
+    summary: "Rare Atelier runs their entire fashion retail operation on NEPALIX. From their visual canvas storefront to physical POS, inventory tracking, and billing—all orchestrated through a single unified commerce OS.",
+    quote: "We don't need multiple disconnected apps anymore. NEPALIX gives us a complete infrastructure to scale our fashion brand natively in Nepal.",
+    quoteName: "Founding Team",
+    quoteRole: "Rare Atelier",
+    metrics: [
+      { icon: ShoppingBag, value: "100%", label: "Omnichannel Sync" },
+      { icon: Users, value: "Unified", label: "Customer Profiles" },
+      { icon: TrendingUp, value: "Zero", label: "Overselling" },
+    ],
+    color: "#06B6D4",
+    tags: ["Canvas Customization", "POS", "Inventory", "Live E-commerce"],
+    link: "https://rare-np-production.up.railway.app/",
+    featured: true
+  },
   {
     company: "Himalayan Roasters",
     industry: "Cafe & Coffee",
@@ -58,25 +80,7 @@ const caseStudies = [
     ],
     color: "#3B82F6",
     tags: ["Online Store", "Serial Tracking", "Khalti + eSewa"],
-  },
-  {
-    company: "Pokhara Threads",
-    industry: "Fashion Boutique",
-    location: "Lakeside, Pokhara",
-    logo: "PT",
-    logoColor: "#8B5CF6",
-    summary: "A tourist-focused boutique that grew from walk-in only to shipping handmade crafts globally through NEPALIX.",
-    quote: "We now ship to 20+ countries. NEPALIX handles the local payments in NPR and international orders seamlessly.",
-    quoteName: "Sita Gurung",
-    quoteRole: "Owner",
-    metrics: [
-      { icon: TrendingUp, value: "20+", label: "Countries Reached" },
-      { icon: Users, value: "+220%", label: "Revenue Growth" },
-      { icon: ShoppingBag, value: "100%", label: "Uptime" },
-    ],
-    color: "#8B5CF6",
-    tags: ["International Shipping", "Online Store", "Custom Storefront"],
-  },
+  }
 ];
 
 export default function CaseStudies() {
@@ -102,12 +106,12 @@ export default function CaseStudies() {
               </span>
             </h1>
             <p className="text-xl text-gray-400">
-              See how Nepali businesses of every size are scaling with NEPALIX.
+              See how Nepali businesses of every size are scaling with NEPALIX. From high-end fashion boutiques to bustling electronics stores.
             </p>
           </motion.div>
         </div>
 
-        <div className="space-y-10 mb-16">
+        <div className="space-y-12 mb-16">
           {caseStudies.map((cs, i) => (
             <motion.div
               key={cs.company}
@@ -115,41 +119,56 @@ export default function CaseStudies() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
-              className={`rounded-2xl border border-white/10 bg-[#0F172A]/60 overflow-hidden grid lg:grid-cols-5 ${i % 2 === 1 ? "lg:direction-rtl" : ""}`}
+              className={`rounded-3xl border border-white/10 bg-[#0F172A]/60 overflow-hidden grid lg:grid-cols-5 ${i % 2 === 1 ? "lg:direction-rtl" : ""}`}
             >
               {/* Left: Company + Quote */}
-              <div className="lg:col-span-3 p-8 flex flex-col justify-between">
+              <div className="lg:col-span-3 p-8 lg:p-12 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center gap-4 mb-5">
+                  <div className="flex items-center gap-4 mb-6">
                     <div
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-lg font-heading flex-shrink-0"
+                      className="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-bold text-xl font-heading flex-shrink-0"
                       style={{ backgroundColor: `${cs.color}25`, border: `1px solid ${cs.color}40` }}
                     >
                       <span style={{ color: cs.color }}>{cs.logo}</span>
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-white font-heading">{cs.company}</h3>
-                      <div className="text-sm text-gray-500">
+                      <h3 className="text-2xl font-bold text-white font-heading">{cs.company}</h3>
+                      <div className="text-sm text-gray-500 mt-1">
                         {cs.industry} · {cs.location}
                       </div>
                     </div>
                   </div>
-                  <p className="text-gray-300 leading-relaxed mb-6">{cs.summary}</p>
-                  <div className="flex flex-wrap gap-2 mb-6">
+                  <p className="text-gray-300 text-lg leading-relaxed mb-8">{cs.summary}</p>
+                  <div className="flex flex-wrap gap-2 mb-8">
                     {cs.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="px-3 py-1 rounded-full text-xs font-medium"
+                        className="px-3 py-1.5 rounded-full text-xs font-medium"
                         style={{ backgroundColor: `${cs.color}15`, color: cs.color, border: `1px solid ${cs.color}30` }}
                       >
                         {tag}
                       </span>
                     ))}
                   </div>
+                  
+                  {cs.link && (
+                    <div className="mb-8">
+                      <a 
+                        href={cs.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-sm font-semibold transition-colors hover:opacity-80"
+                        style={{ color: cs.color }}
+                      >
+                        View Live Store <ExternalLink className="w-4 h-4" />
+                      </a>
+                    </div>
+                  )}
+
                 </div>
-                <blockquote className="border-l-2 pl-4" style={{ borderColor: cs.color }}>
-                  <Quote className="w-5 h-5 mb-2" style={{ color: cs.color }} />
-                  <p className="text-gray-300 text-sm italic mb-2">"{cs.quote}"</p>
+                <blockquote className="border-l-2 pl-5 py-2" style={{ borderColor: cs.color }}>
+                  <Quote className="w-6 h-6 mb-3" style={{ color: cs.color }} />
+                  <p className="text-gray-300 text-base italic mb-3">"{cs.quote}"</p>
                   <cite className="text-sm not-italic">
                     <span className="text-white font-medium">{cs.quoteName}</span>
                     <span className="text-gray-500"> — {cs.quoteRole}, {cs.company}</span>
@@ -157,39 +176,60 @@ export default function CaseStudies() {
                 </blockquote>
               </div>
 
-              {/* Right: Metrics */}
-              <div
-                className="lg:col-span-2 p-8 flex flex-col justify-center gap-6"
-                style={{ background: `linear-gradient(135deg, ${cs.color}08, transparent)` }}
-              >
-                {cs.metrics.map((m, mi) => {
-                  const MIcon = m.icon;
-                  return (
-                    <div key={mi} className="flex items-center gap-4">
-                      <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: `${cs.color}20` }}
-                      >
-                        <MIcon className="w-5 h-5" style={{ color: cs.color }} />
-                      </div>
-                      <div>
-                        <div className="text-3xl font-bold text-white font-heading" style={{ color: cs.color }}>
-                          {m.value}
+              {/* Right: Metrics / Featured Image */}
+              {cs.featured ? (
+                 <div
+                 className="lg:col-span-2 relative min-h-[300px]"
+               >
+                 <div className="absolute inset-0 bg-gradient-to-t from-[#070B14] via-transparent to-transparent z-10" />
+                 <img src={rareImg} alt={`${cs.company} showcase`} className="absolute inset-0 w-full h-full object-cover" />
+                 <div className="absolute bottom-0 left-0 right-0 p-8 z-20">
+                     <div className="grid grid-cols-3 gap-4">
+                       {cs.metrics.map((m, mi) => (
+                         <div key={mi} className="text-center bg-[#070B14]/80 backdrop-blur-md rounded-xl p-3 border border-white/10">
+                           <div className="text-xl font-bold text-white font-heading mb-1" style={{ color: cs.color }}>
+                             {m.value}
+                           </div>
+                           <div className="text-gray-400 text-xs leading-tight">{m.label}</div>
+                         </div>
+                       ))}
+                     </div>
+                 </div>
+               </div>
+              ) : (
+                <div
+                  className="lg:col-span-2 p-8 lg:p-12 flex flex-col justify-center gap-8"
+                  style={{ background: `linear-gradient(135deg, ${cs.color}08, transparent)` }}
+                >
+                  {cs.metrics.map((m, mi) => {
+                    const MIcon = m.icon;
+                    return (
+                      <div key={mi} className="flex items-center gap-5">
+                        <div
+                          className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+                          style={{ backgroundColor: `${cs.color}20` }}
+                        >
+                          <MIcon className="w-6 h-6" style={{ color: cs.color }} />
                         </div>
-                        <div className="text-gray-500 text-sm">{m.label}</div>
+                        <div>
+                          <div className="text-3xl font-bold text-white font-heading mb-1" style={{ color: cs.color }}>
+                            {m.value}
+                          </div>
+                          <div className="text-gray-400 text-sm">{m.label}</div>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </motion.div>
           ))}
         </div>
 
         <div className="text-center">
-          <p className="text-gray-500 mb-6">Ready to write your own success story?</p>
+          <p className="text-gray-500 mb-6 text-lg">Ready to write your own success story?</p>
           <GradientButton href="/book-demo" size="lg">
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2 text-base">
               Book a Demo <ArrowRight className="w-5 h-5" />
             </span>
           </GradientButton>

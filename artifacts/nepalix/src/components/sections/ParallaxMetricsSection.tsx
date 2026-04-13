@@ -74,7 +74,7 @@ export function ParallaxMetricsSection() {
           transition={{ duration: 0.5 }}
           className="rounded-2xl border border-[#84CC16]/30 bg-[#84CC16]/5 p-8 text-center max-w-3xl mx-auto mb-10"
         >
-          <div className="text-3xl mb-3">✅</div>
+          <div className="text-sm font-semibold uppercase tracking-[0.2em] text-[#84CC16] mb-3">Guarantee</div>
           <h3 className="text-2xl font-bold text-white font-heading mb-2">30-Day Money Back Guarantee</h3>
           <p className="text-gray-400 mb-6">
             If NEPALIX doesn't make your life easier in 30 days, we'll refund every rupee.
@@ -93,10 +93,10 @@ export function ParallaxMetricsSection() {
         {/* Trust badges */}
         <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-500">
           {[
-            "🔒 Bank-grade SSL security",
-            "📱 No tech skills needed",
-            "⚡ Setup in under 30 minutes",
-            "🇳🇵 Built & supported in Nepal",
+            "Bank-grade SSL security",
+            "No tech skills needed",
+            "Setup in under 30 minutes",
+            "Built & supported in Nepal",
           ].map((badge, i) => (
             <motion.div
               key={i}
