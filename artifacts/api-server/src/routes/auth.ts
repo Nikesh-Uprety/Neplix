@@ -18,8 +18,8 @@ const COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 function setSessionCookie(res: Response, token: string) {
   res.cookie("session_token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
     maxAge: COOKIE_MAX_AGE,
     path: "/",
   });
@@ -145,7 +145,7 @@ router.post("/logout", authMiddleware, async (req: AuthRequest, res: Response) =
       .where(eq(sessionsTable.token, req.sessionToken));
   }
 
-  res.clearCookie("session_token", { path: "/" });
+  res.clearCookie("session_token", { path: "/", secure: true, sameSite: "none" });
   res.json({ success: true });
 });
 

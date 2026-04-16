@@ -9,20 +9,34 @@ type RequestOptions = {
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, headers = {} } = options;
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...headers,
-    },
-    credentials: "include",
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...headers,
+      },
+      credentials: "include",
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw new Error("Network error — please check your connection and try again");
+  }
 
-  const data = await res.json();
+  const text = await res.text();
+  let data: unknown = {};
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error(`Unexpected server response (${res.status})`);
+    }
+  }
 
   if (!res.ok) {
-    throw new Error(data.error || `Request failed: ${res.status}`);
+    const err = data as Record<string, unknown>;
+    throw new Error(typeof err?.error === "string" ? err.error : `Request failed: ${res.status}`);
   }
 
   return data as T;
