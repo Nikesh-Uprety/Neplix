@@ -1,8 +1,13 @@
 {
+  "$schema": "https://railway.app/schema.json",
   "build": {
     "command": "pnpm install && pnpm run build"
   },
   "deploy": {
-    "startCommand": "pnpm run start"
+    "startCommand": "node --enable-source-maps ./dist/index.mjs",
+    "env": {
+      "NEON_DATABASE_URL": "postgresql://neondb_owner:npg_UNZMsT1QE7KY@ep-floral-sea-a1yth453-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+      "SESSION_SECRET": "nepalix-super-secret-key-change-this-to-something-long-and-random-2024"
+    }
   }
 }
