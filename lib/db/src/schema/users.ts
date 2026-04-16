@@ -1,5 +1,4 @@
 import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const usersTable = pgTable("users", {
@@ -11,12 +10,6 @@ export const usersTable = pgTable("users", {
   role: text("role").notNull().default("user"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
-export const insertUserSchema = createInsertSchema(usersTable).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
 });
 
 export const registerSchema = z.object({
@@ -31,5 +24,21 @@ export const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof usersTable.$inferSelect;
+export type InsertUser = {
+  email: string;
+  passwordHash: string;
+  firstName: string;
+  lastName: string;
+  role?: string;
+};
+
+export type User = {
+  id: string;
+  email: string;
+  passwordHash: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  createdAt: Date;
+  updatedAt: Date;
+};

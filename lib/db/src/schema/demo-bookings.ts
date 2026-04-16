@@ -1,5 +1,4 @@
 import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const demoBookingsTable = pgTable("demo_bookings", {
@@ -15,12 +14,6 @@ export const demoBookingsTable = pgTable("demo_bookings", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const insertDemoBookingSchema = createInsertSchema(demoBookingsTable).omit({
-  id: true,
-  status: true,
-  createdAt: true,
-});
-
 export const demoBookingRequestSchema = z.object({
   firstName: z.string().min(2),
   lastName: z.string().min(2),
@@ -31,5 +24,25 @@ export const demoBookingRequestSchema = z.object({
   message: z.string().optional(),
 });
 
-export type InsertDemoBooking = z.infer<typeof insertDemoBookingSchema>;
-export type DemoBooking = typeof demoBookingsTable.$inferSelect;
+export type InsertDemoBooking = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  businessType: string;
+  timeSlot: string;
+  message?: string | null;
+};
+
+export type DemoBooking = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  businessType: string;
+  timeSlot: string;
+  message: string | null;
+  status: string;
+  createdAt: Date;
+};
