@@ -7,6 +7,7 @@ import { CheckCircle, Clock, Video, Users, Zap, AlertCircle } from "lucide-react
 import { SectionWrapper } from "@/components/ui-custom/SectionWrapper";
 import { GlassCard } from "@/components/ui-custom/GlassCard";
 import { GradientButton } from "@/components/ui-custom/GradientButton";
+import { api } from "@/lib/api";
 
 const demoSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -39,6 +40,7 @@ const businessTypes = [
 
 export default function BookDemo() {
   const [submitted, setSubmitted] = useState(false);
+  const [serverError, setServerError] = useState("");
 
   const {
     register,
@@ -53,13 +55,16 @@ export default function BookDemo() {
 
   const selectedSlot = watch("timeSlot");
 
-  function onSubmit(_data: DemoFormValues) {
-    return new Promise<void>((resolve) => {
-      setTimeout(() => {
-        setSubmitted(true);
-        resolve();
-      }, 800);
-    });
+  async function onSubmit(data: DemoFormValues) {
+    setServerError("");
+    try {
+      await api.demoBookings.create(data);
+      setSubmitted(true);
+    } catch (e: unknown) {
+      setServerError(
+        e instanceof Error ? e.message : "Something went wrong. Please try again."
+      );
+    }
   }
 
   function FieldError({ name }: { name: keyof DemoFormValues }) {
@@ -152,6 +157,12 @@ export default function BookDemo() {
               </GlassCard>
             ) : (
               <GlassCard>
+                {serverError && (
+                  <div className="mb-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    {serverError}
+                  </div>
+                )}
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
                   <div className="grid grid-cols-2 gap-4">
                     <div>

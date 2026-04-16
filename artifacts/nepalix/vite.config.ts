@@ -21,12 +21,6 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       runtimeErrorOverlay(),
-      ...(env.NODE_ENV !== "production" && env.REPL_ID !== undefined
-        ? [
-            // safer dynamic imports
-            // (Vercel won't care, but cleaner)
-          ]
-        : []),
     ],
     resolve: {
       alias: {
@@ -47,6 +41,13 @@ export default defineConfig(({ mode }) => {
       fs: {
         strict: true,
         deny: ["**/.*"],
+      },
+      proxy: {
+        "/api": {
+          target: "http://localhost:3001",
+          changeOrigin: true,
+          secure: false,
+        },
       },
     },
     preview: {

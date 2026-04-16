@@ -32,6 +32,36 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Express 5 API server with Zod validation and Drizzle ORM
 - Preview path: `/api`
 
+## Database (Neon PostgreSQL)
+
+- **Connection**: `NEON_DATABASE_URL` env var → Neon PostgreSQL hosted database
+- **Tables**: `users`, `sessions`, `demo_bookings`
+- **Schema**: `lib/db/src/schema/` — users.ts, sessions.ts, demo-bookings.ts
+- **Push schema**: `NEON_DATABASE_URL=... pnpm --filter @workspace/db run push`
+
+## Authentication
+
+- Cookie-based session auth (7-day expiry)
+- Password hashing with bcryptjs (12 rounds)
+- Routes: `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`
+- Frontend: `AuthContext` in `artifacts/nepalix/src/context/AuthContext.tsx`
+- Auth modal: `artifacts/nepalix/src/components/auth/AuthModal.tsx`
+
+## API Routes
+
+- `GET /api/healthz` — health check
+- `POST /api/auth/register` — create user account
+- `POST /api/auth/login` — authenticate user
+- `POST /api/auth/logout` — invalidate session
+- `GET /api/auth/me` — get current user (requires auth)
+- `POST /api/demo-bookings` — create demo booking (public)
+- `GET /api/demo-bookings` — list all bookings (admin only)
+
+## Workflows
+
+- **Start application** — Vite dev server for NEPALIX frontend (port 5173 proxies /api → 3001)
+- **API Server** — Express API server (port 3001)
+
 ## Key Commands
 
 - `pnpm run typecheck` — full typecheck across all packages
