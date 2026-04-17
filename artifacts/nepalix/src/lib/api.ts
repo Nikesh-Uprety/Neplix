@@ -1,5 +1,6 @@
 const rawApiUrl = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
 const API_BASE = rawApiUrl ? `${rawApiUrl}/api` : "/api";
+export const googleAuthUrl = `${API_BASE}/auth/google`;
 
 type RequestOptions = {
   method?: string;

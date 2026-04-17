@@ -163,4 +163,110 @@ router.get("/me", authMiddleware, (req: AuthRequest, res: Response) => {
   });
 });
 
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const GOOGLE_REDIRECT_URI =
+  process.env.GOOGLE_REDIRECT_URI ??
+  "http://localhost:3000/api/auth/google/callback";
+const FRONTEND_URL = process.env.FRONTEND_URL ?? "http://localhost:5173";
+
+router.get("/google", (_req: Request, res: Response) => {
+  if (!GOOGLE_CLIENT_ID) {
+    res.status(501).json({ error: "Google OAuth not configured" });
+    return;
+  }
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: GOOGLE_REDIRECT_URI,
+    response_type: "code",
+    scope: "openid email profile",
+    access_type: "offline",
+    prompt: "select_account",
+  });
+  res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
+});
+
+router.get("/google/callback", async (req: Request, res: Response) => {
+  const { code, error } = req.query as Record<string, string>;
+
+  if (error || !code || !GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+    res.redirect(`${FRONTEND_URL}?google_auth=error`);
+    return;
+  }
+
+  try {
+    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code,
+        client_id: GOOGLE_CLIENT_ID,
+        client_secret: GOOGLE_CLIENT_SECRET,
+        redirect_uri: GOOGLE_REDIRECT_URI,
+        grant_type: "authorization_code",
+      }),
+    });
+    const tokens = (await tokenRes.json()) as {
+      access_token?: string;
+      error?: string;
+    };
+
+    if (!tokens.access_token) {
+      res.redirect(`${FRONTEND_URL}?google_auth=error`);
+      return;
+    }
+
+    const userInfoRes = await fetch(
+      "https://www.googleapis.com/oauth2/v2/userinfo",
+      { headers: { Authorization: `Bearer ${tokens.access_token}` } }
+    );
+    const googleUser = (await userInfoRes.json()) as {
+      id: string;
+      email: string;
+      given_name?: string;
+      family_name?: string;
+    };
+
+    if (!googleUser.email) {
+      res.redirect(`${FRONTEND_URL}?google_auth=error`);
+      return;
+    }
+
+    let [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.email, googleUser.email.toLowerCase()))
+      .limit(1);
+
+    if (!user) {
+      [user] = await db
+        .insert(usersTable)
+        .values({
+          email: googleUser.email.toLowerCase(),
+          passwordHash: `GOOGLE:${googleUser.id}`,
+          firstName: googleUser.given_name ?? "User",
+          lastName: googleUser.family_name ?? "",
+          role: "user",
+          googleId: googleUser.id,
+        })
+        .returning();
+    } else if (!user.googleId) {
+      [user] = await db
+        .update(usersTable)
+        .set({ googleId: googleUser.id })
+        .where(eq(usersTable.id, user.id))
+        .returning();
+    }
+
+    const token = randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + COOKIE_MAX_AGE);
+    await db.insert(sessionsTable).values({ userId: user.id, token, expiresAt });
+
+    setSessionCookie(res, token);
+    res.redirect(`${FRONTEND_URL}?google_auth=success`);
+  } catch (_err) {
+    res.redirect(`${FRONTEND_URL}?google_auth=error`);
+  }
+});
+
 export default router;

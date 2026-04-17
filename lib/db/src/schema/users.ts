@@ -8,6 +8,7 @@ export const usersTable = pgTable("users", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   role: text("role").notNull().default("user"),
+  googleId: text("google_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -30,6 +31,7 @@ export type InsertUser = {
   firstName: string;
   lastName: string;
   role?: string;
+  googleId?: string;
 };
 
 export type User = {

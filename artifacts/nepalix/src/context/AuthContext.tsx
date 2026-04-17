@@ -12,6 +12,8 @@ type AuthContextType = {
   user: AuthUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  googleAuthError: boolean;
+  clearGoogleAuthError: () => void;
   login: (email: string, password: string) => Promise<void>;
   register: (data: {
     email: string;
@@ -27,8 +29,15 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [googleAuthError, setGoogleAuthError] = useState(false);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const googleAuth = params.get("google_auth");
+    if (googleAuth) {
+      window.history.replaceState({}, "", window.location.pathname);
+      if (googleAuth === "error") setGoogleAuthError(true);
+    }
     api.auth
       .me()
       .then(({ user }) => setUser(user))
@@ -59,12 +68,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const clearGoogleAuthError = useCallback(() => setGoogleAuthError(false), []);
+
   return (
     <AuthContext.Provider
       value={{
         user,
         isLoading,
         isAuthenticated: !!user,
+        googleAuthError,
+        clearGoogleAuthError,
         login,
         register,
         logout,
