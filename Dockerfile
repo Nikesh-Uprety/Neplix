@@ -20,20 +20,10 @@ RUN npm run build
 
 FROM nginx:alpine
 
-RUN apk add --no-cache bash
-
 COPY --from=builder /app/artifacts/nepalix/dist /usr/share/nginx/html
 
-RUN echo 'server { \
-    listen $PORT; \
-    server_name _; \
-    root /usr/share/nginx/html; \
-    index index.html; \
-    location / { \
-        try_files $uri $uri/ /index.html; \
-    } \
-}' > /etc/nginx/conf.d/default.conf
+RUN printf 'server {\n    listen 10000;\n    server_name _;\n    root /usr/share/nginx/html;\n    index index.html;\n\n    location / {\n        try_files \$uri \$uri/ /index.html;\n    }\n\n    gzip on;\n    gzip_types text/plain text/css application/json application/javascript text/xml application/xml;\n}\n' > /etc/nginx/conf.d/default.conf
 
-EXPOSE $PORT
+EXPOSE 10000
 
-CMD ["sh", "-c", "nginx -g 'daemon off;'"]
+CMD ["nginx", "-g", "daemon off;"]
