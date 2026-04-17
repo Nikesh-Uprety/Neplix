@@ -1,8 +1,13 @@
 {
   "framework": "vite",
+  "installCommand": "cd ../.. && pnpm install --filter @workspace/nepalix...",
   "buildCommand": "pnpm build",
   "outputDirectory": "dist",
   "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://neplix-production.up.railway.app/api/:path*"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"

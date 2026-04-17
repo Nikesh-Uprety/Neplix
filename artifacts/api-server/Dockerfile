@@ -2,7 +2,7 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
 
 # Copy workspace config and lockfile
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json tsconfig.base.json ./
