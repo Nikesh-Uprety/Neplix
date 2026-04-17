@@ -15,7 +15,7 @@ COPY lib/api-zod ./lib/api-zod
 COPY artifacts/api-server ./artifacts/api-server
 
 # Install all workspace deps needed for the build
-RUN pnpm install --frozen-lockfile --filter @workspace/api-server...
+RUN pnpm install --no-frozen-lockfile --filter @workspace/api-server...
 
 # Build api-server (esbuild bundles everything into dist/index.mjs)
 RUN pnpm --filter @workspace/api-server run build
