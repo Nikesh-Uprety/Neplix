@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import pako from "pako";
 
 interface Customer {
   fullName: string;
@@ -34,6 +35,20 @@ interface CheckoutData {
   items: CartItem[];
 }
 
+function decompressData(encoded: string): CheckoutData | null {
+  try {
+    const binary = atob(encoded);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    const decompressed = pako.inflate(bytes, { to: "string" });
+    return JSON.parse(decompressed);
+  } catch {
+    return null;
+  }
+}
+
 export default function Checkout() {
   const [location] = useLocation();
   const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
@@ -42,12 +57,16 @@ export default function Checkout() {
   useEffect(() => {
     try {
       const params = new URLSearchParams(location.split("?")[1] || "");
-      const seed = params.get("admin_order_seed");
+      const seed = params.get("o");
       if (!seed) {
         setError("No checkout data found");
         return;
       }
-      const decoded = JSON.parse(atob(seed));
+      const decoded = decompressData(seed);
+      if (!decoded) {
+        setError("Invalid checkout data");
+        return;
+      }
       setCheckoutData(decoded);
     } catch (e) {
       setError("Failed to parse checkout data");
