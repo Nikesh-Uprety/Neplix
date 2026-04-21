@@ -374,16 +374,32 @@ export default function Pricing() {
                     </div>
 
                     <div className="mb-2">
-                      <div className="flex items-end gap-1">
-                        <span className="text-4xl font-extrabold text-white font-heading">
-                          Rs {plan.yearlyPrice.toLocaleString()}
-                        </span>
-                        <span className="text-gray-500 pb-1">/Year</span>
-                      </div>
-                      {plan.monthlyPrice && (
-                        <div className="text-gray-500 text-xs mt-0.5">
-                          Rs {plan.monthlyPrice.toLocaleString()}/mo if billed monthly
-                        </div>
+                      {plan.name === "Base" && plan.monthlyPrice ? (
+                        <>
+                          <div className="flex items-end gap-1">
+                            <span className="text-4xl font-extrabold text-white font-heading">
+                              Rs {plan.monthlyPrice.toLocaleString()}
+                            </span>
+                            <span className="text-gray-500 pb-1">/Month</span>
+                          </div>
+                          <div className="text-gray-500 text-xs mt-0.5">
+                            Rs {plan.yearlyPrice.toLocaleString()}/Year if billed annually
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-end gap-1">
+                            <span className="text-4xl font-extrabold text-white font-heading">
+                              Rs {plan.yearlyPrice.toLocaleString()}
+                            </span>
+                            <span className="text-gray-500 pb-1">/Year</span>
+                          </div>
+                          {plan.monthlyPrice && (
+                            <div className="text-gray-500 text-xs mt-0.5">
+                              Rs {plan.monthlyPrice.toLocaleString()}/mo if billed monthly
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
 
