@@ -172,18 +172,20 @@ const isHostedRuntime =
   process.env.RAILWAY_ENVIRONMENT !== undefined ||
   process.env.VERCEL === "1";
 
-function getPublicUrlEnv(name: string, localFallback: string) {
+function getPublicUrlEnv(name: string, localFallback: string, options?: { requiredForHosted?: boolean }) {
   const value = process.env[name]?.replace(/\/$/, "") || localFallback;
   let parsed: URL;
 
   try {
     parsed = new URL(value);
   } catch {
-    throw new Error(`${name} must be a valid absolute URL`);
+    logger.error({ envVar: name }, "Invalid public URL environment variable");
+    return null;
   }
 
   if (isHostedRuntime && ["localhost", "127.0.0.1", "::1"].includes(parsed.hostname)) {
-    throw new Error(`${name} cannot point to localhost in a hosted environment`);
+    logger.error({ envVar: name }, "Public URL cannot point to localhost in a hosted environment");
+    return options?.requiredForHosted ? null : value;
   }
 
   return value;
@@ -191,12 +193,13 @@ function getPublicUrlEnv(name: string, localFallback: string) {
 
 const GOOGLE_REDIRECT_URI = getPublicUrlEnv(
   "GOOGLE_REDIRECT_URI",
-  "http://localhost:3000/api/auth/google/callback"
+  "http://localhost:3000/api/auth/google/callback",
+  { requiredForHosted: true }
 );
 const FRONTEND_URL = getPublicUrlEnv("FRONTEND_URL", "http://localhost:5173");
 
 router.get("/google", (_req: Request, res: Response) => {
-  if (!GOOGLE_CLIENT_ID) {
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_REDIRECT_URI) {
     res.status(501).json({ error: "Google OAuth not configured" });
     return;
   }
@@ -214,8 +217,8 @@ router.get("/google", (_req: Request, res: Response) => {
 router.get("/google/callback", async (req: Request, res: Response) => {
   const { code, error } = req.query as Record<string, string>;
 
-  if (error || !code || !GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-    res.redirect(`${FRONTEND_URL}?google_auth=error`);
+  if (error || !code || !GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REDIRECT_URI) {
+    res.redirect(`${FRONTEND_URL ?? "/"}?google_auth=error`);
     return;
   }
 
@@ -237,7 +240,7 @@ router.get("/google/callback", async (req: Request, res: Response) => {
     };
 
     if (!tokens.access_token) {
-      res.redirect(`${FRONTEND_URL}?google_auth=error`);
+      res.redirect(`${FRONTEND_URL ?? "/"}?google_auth=error`);
       return;
     }
 
@@ -253,7 +256,7 @@ router.get("/google/callback", async (req: Request, res: Response) => {
     };
 
     if (!googleUser.email) {
-      res.redirect(`${FRONTEND_URL}?google_auth=error`);
+      res.redirect(`${FRONTEND_URL ?? "/"}?google_auth=error`);
       return;
     }
 
@@ -297,9 +300,9 @@ router.get("/google/callback", async (req: Request, res: Response) => {
     await db.insert(sessionsTable).values({ userId: user.id, token, expiresAt });
 
     setSessionCookie(res, token);
-    res.redirect(`${FRONTEND_URL}?google_auth=success`);
+    res.redirect(`${FRONTEND_URL ?? "/"}?google_auth=success`);
   } catch (_err) {
-    res.redirect(`${FRONTEND_URL}?google_auth=error`);
+    res.redirect(`${FRONTEND_URL ?? "/"}?google_auth=error`);
   }
 });
 
