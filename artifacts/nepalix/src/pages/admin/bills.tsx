@@ -29,9 +29,9 @@ export default function AdminBills() {
         <StatCard label="Failed" value={summary?.failed ?? 0} accent="rose" />
       </div>
 
-      <div className="rounded-2xl border border-white/5 bg-[#0B1220] overflow-hidden">
+      <div className="rounded-xl border border-[#E5E7EB] bg-white shadow-sm overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-white/[0.03] text-white/60 text-xs uppercase tracking-wide">
+          <thead className="bg-[#FAFBFF] text-[#9CA3AF] text-xs uppercase tracking-wide">
             <tr>
               <th className="text-left px-4 py-3">User</th>
               <th className="text-left px-4 py-3">Plan</th>
@@ -43,29 +43,29 @@ export default function AdminBills() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-white/50">Loading…</td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-[#9CA3AF]">Loading…</td></tr>
             ) : bills.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-white/50">No bills yet.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-[#9CA3AF]">No bills yet.</td></tr>
             ) : (
               bills.map((b) => (
-                <tr key={b.id} className="border-t border-white/5 hover:bg-white/[0.02]">
+                <tr key={b.id} className="border-t border-[#F3F4F6] hover:bg-[#FAFBFF]">
                   <td className="px-4 py-3">
-                    <div>{b.userName ?? "—"}</div>
-                    <div className="text-xs text-white/50">{b.userEmail}</div>
+                    <div className="font-medium text-[#111827]">{b.userName ?? "—"}</div>
+                    <div className="text-xs text-[#9CA3AF]">{b.userEmail}</div>
                   </td>
-                  <td className="px-4 py-3 capitalize">{b.planName ?? b.planSlug ?? "—"}</td>
-                  <td className="px-4 py-3 capitalize text-white/70">{b.provider}</td>
-                  <td className="px-4 py-3 text-right">Rs {b.amount.toLocaleString()}</td>
+                  <td className="px-4 py-3 capitalize text-[#111827]">{b.planName ?? b.planSlug ?? "—"}</td>
+                  <td className="px-4 py-3 capitalize text-[#6B7280]">{b.provider}</td>
+                  <td className="px-4 py-3 text-right font-medium text-[#111827]">Rs {b.amount.toLocaleString()}</td>
                   <td className="px-4 py-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${
-                      b.status === "verified" ? "bg-emerald-500/15 text-emerald-300"
-                      : b.status === "failed" ? "bg-rose-500/15 text-rose-300"
-                      : "bg-amber-500/15 text-amber-300"
+                      b.status === "verified" ? "bg-[#DCFCE7] text-[#15803D]"
+                      : b.status === "failed" ? "bg-[#FEE2E2] text-[#DC2626]"
+                      : "bg-[#FEF3C7] text-[#B45309]"
                     }`}>
                       {b.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-xs text-white/60">{new Date(b.createdAt).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-xs text-[#9CA3AF]">{new Date(b.createdAt).toLocaleDateString()}</td>
                 </tr>
               ))
             )}

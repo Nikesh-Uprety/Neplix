@@ -17,6 +17,11 @@ import adminAnalyticsRouter from "./admin-analytics.js";
 import adminMarketingRouter from "./admin-marketing.js";
 import adminNotificationsRouter from "./admin-notifications.js";
 import adminBillsRouter from "./admin-bills.js";
+import adminPosRouter from "./admin-pos.js";
+import adminMediaRouter from "./admin-media.js";
+import adminLandingRouter from "./admin-landing.js";
+import adminLogsRouter from "./admin-logs.js";
+import storesRouter from "./stores.js";
 
 const router: IRouter = Router();
 
@@ -28,6 +33,7 @@ router.use("/account", accountRouter);
 router.use("/plans", plansRouter);
 router.use("/subscriptions", subscriptionsRouter);
 router.use("/payments", paymentsRouter);
+router.use("/stores", storesRouter);
 router.use("/admin/products", adminProductsRouter);
 router.use("/admin/orders", adminOrdersRouter);
 router.use("/admin/customers", adminCustomersRouter);
@@ -37,6 +43,10 @@ router.use("/admin/analytics", adminAnalyticsRouter);
 router.use("/admin/marketing", adminMarketingRouter);
 router.use("/admin/notifications", adminNotificationsRouter);
 router.use("/admin/bills", adminBillsRouter);
+router.use("/admin/pos", adminPosRouter);
+router.use("/admin/media", adminMediaRouter);
+router.use("/admin/landing", adminLandingRouter);
+router.use("/admin/logs", adminLogsRouter);
 router.use("/admin", adminRouter);
 
 export default router;

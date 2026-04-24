@@ -22,11 +22,10 @@ const router: IRouter = Router();
 router.use(authMiddleware);
 
 const PLAN_SLUGS: readonly PlanSlug[] = [
-  "trial",
+  "free",
   "starter",
-  "growth",
-  "pro",
-  "elite",
+  "business",
+  "enterprise",
 ] as const;
 
 const providerSchema = z.enum(["khalti", "esewa"]);

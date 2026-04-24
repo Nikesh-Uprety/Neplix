@@ -61,19 +61,19 @@ router.post("/cancel", async (req: SubscriptionRequest, res: Response) => {
 
 export async function createTrialSubscription(userId: string): Promise<void> {
   const trialDays = Number(process.env.TRIAL_DAYS ?? 14);
-  const [trialPlan] = await db
+  const [freePlan] = await db
     .select()
     .from(plansTable)
-    .where(eq(plansTable.slug, "trial" satisfies PlanSlug))
+    .where(eq(plansTable.slug, "free" satisfies PlanSlug))
     .limit(1);
-  if (!trialPlan) {
-    throw new Error("Trial plan not seeded");
+  if (!freePlan) {
+    throw new Error("Free plan not seeded");
   }
   const now = new Date();
   const trialEndsAt = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000);
   await db.insert(subscriptionsTable).values({
     userId,
-    planId: trialPlan.id,
+    planId: freePlan.id,
     status: "trialing",
     trialStartedAt: now,
     trialEndsAt,

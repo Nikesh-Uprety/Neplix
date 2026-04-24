@@ -63,16 +63,16 @@ function ProductFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-      <div className="w-full max-w-lg rounded-2xl bg-[#0B1220] border border-white/10 p-6">
+      <div className="w-full max-w-lg rounded-2xl bg-white border border-[#E5E7EB] p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold">{initial ? "Edit product" : "New product"}</h3>
-          <button onClick={onClose} className="text-white/60 hover:text-white">
+          <h3 className="font-semibold text-[#111827]">{initial ? "Edit product" : "New product"}</h3>
+          <button onClick={onClose} className="text-[#9CA3AF] hover:text-[#111827]">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="space-y-3">
           <div>
-            <label className="text-xs text-white/60">Name</label>
+            <label className="text-xs text-[#6B7280]">Name</label>
             <Input
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -80,14 +80,14 @@ function ProductFormModal({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-white/60">SKU</label>
+              <label className="text-xs text-[#6B7280]">SKU</label>
               <Input
                 value={form.sku ?? ""}
                 onChange={(e) => setForm({ ...form, sku: e.target.value })}
               />
             </div>
             <div>
-              <label className="text-xs text-white/60">Status</label>
+              <label className="text-xs text-[#6B7280]">Status</label>
               <select
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                 value={form.status}
@@ -103,7 +103,7 @@ function ProductFormModal({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-white/60">Price (Rs)</label>
+              <label className="text-xs text-[#6B7280]">Price (Rs)</label>
               <Input
                 type="number"
                 value={form.price ?? 0}
@@ -111,7 +111,7 @@ function ProductFormModal({
               />
             </div>
             <div>
-              <label className="text-xs text-white/60">Stock</label>
+              <label className="text-xs text-[#6B7280]">Stock</label>
               <Input
                 type="number"
                 value={form.stock ?? 0}
@@ -120,7 +120,7 @@ function ProductFormModal({
             </div>
           </div>
           <div>
-            <label className="text-xs text-white/60">Description</label>
+            <label className="text-xs text-[#6B7280]">Description</label>
             <textarea
               rows={3}
               value={form.description ?? ""}
@@ -196,7 +196,7 @@ export default function AdminProducts() {
     >
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF]" />
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -210,9 +210,9 @@ export default function AdminProducts() {
         </Button>
       </div>
 
-      <div className="rounded-2xl border border-white/5 bg-[#0B1220] overflow-hidden">
+      <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-sm overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-white/[0.03] text-white/60 text-xs uppercase tracking-wide">
+          <thead className="bg-[#FAFBFF] text-[#9CA3AF] text-xs uppercase tracking-wide">
             <tr>
               <th className="text-left px-4 py-3">Product</th>
               <th className="text-left px-4 py-3">SKU</th>
@@ -225,32 +225,32 @@ export default function AdminProducts() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-white/50">
+                <td colSpan={6} className="px-4 py-10 text-center text-[#9CA3AF]">
                   Loading…
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-white/50">
-                  No products yet. Click <span className="text-white">New product</span> to add one.
+                <td colSpan={6} className="px-4 py-10 text-center text-[#9CA3AF]">
+                  No products yet. Click <span className="text-[#111827]">New product</span> to add one.
                 </td>
               </tr>
             ) : (
               items.map((p) => (
-                <tr key={p.id} className="border-t border-white/5 hover:bg-white/[0.02]">
+                <tr key={p.id} className="border-t border-[#F3F4F6] hover:bg-[#FAFBFF]">
                   <td className="px-4 py-3">
-                    <div className="font-medium">{p.name}</div>
+                    <div className="font-medium text-[#111827]">{p.name}</div>
                     {p.description && (
-                      <div className="text-xs text-white/40 truncate max-w-xs">{p.description}</div>
+                      <div className="text-xs text-[#9CA3AF] truncate max-w-xs">{p.description}</div>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-white/60">{p.sku ?? "—"}</td>
-                  <td className="px-4 py-3 text-right">Rs {p.price.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-[#6B7280]">{p.sku ?? "—"}</td>
+                  <td className="px-4 py-3 text-right text-[#111827] font-medium">Rs {p.price.toLocaleString()}</td>
                   <td className="px-4 py-3 text-right">
-                    <span className={p.stock < 5 ? "text-rose-300" : "text-white/80"}>{p.stock}</span>
+                    <span className={p.stock < 5 ? "text-[#DC2626]" : "text-[#374151]"}>{p.stock}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="inline-block px-2 py-0.5 rounded-full text-xs bg-white/5 text-white/70 capitalize">
+                    <span className="inline-block px-2 py-0.5 rounded-full text-xs bg-[#F3F4F6] text-[#6B7280] capitalize">
                       {p.status}
                     </span>
                   </td>

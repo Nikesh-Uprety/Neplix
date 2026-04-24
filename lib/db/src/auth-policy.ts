@@ -23,6 +23,12 @@ export const ADMIN_PAGE_KEYS = [
   "notifications",
   "messages",
   "bills",
+  "pos",
+  "logs",
+  "images",
+  "buckets",
+  "storefront-images",
+  "landing-page",
   "profile",
 ] as const;
 

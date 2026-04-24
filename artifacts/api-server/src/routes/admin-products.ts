@@ -2,16 +2,16 @@ import { Router, type IRouter, type Response } from "express";
 import { db, productsTable } from "@workspace/db";
 import { and, desc, eq, ilike, sql } from "drizzle-orm";
 import { z } from "zod";
-import { authMiddleware, type AuthRequest } from "../middlewares/auth.js";
+import { authMiddleware } from "../middlewares/auth.js";
 import { requireAdminPage } from "../middlewares/admin.js";
+import {
+  resolveTenantContext,
+  type TenantRequest,
+} from "../middlewares/tenant.js";
+import { incrementStoreUsage } from "../lib/usage.js";
 
 const router: IRouter = Router();
-
-router.use(authMiddleware, requireAdminPage("products"));
-
-function getStoreId(req: AuthRequest): string | null {
-  return req.user?.storeId ?? null;
-}
+router.use(authMiddleware, resolveTenantContext, requireAdminPage("products"));
 
 const listQuery = z.object({
   q: z.string().trim().min(1).optional(),
@@ -20,8 +20,8 @@ const listQuery = z.object({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
-router.get("/", async (req: AuthRequest, res: Response) => {
-  const storeId = getStoreId(req);
+router.get("/", async (req: TenantRequest, res: Response) => {
+  const storeId = req.tenant!.storeId;
   const parsed = listQuery.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid query" });
@@ -54,12 +54,13 @@ router.get("/", async (req: AuthRequest, res: Response) => {
   res.json({ products: rows, total: totalRows[0]?.count ?? 0 });
 });
 
-router.get("/:id", async (req: AuthRequest, res: Response) => {
+router.get("/:id", async (req: TenantRequest, res: Response) => {
   const id = req.params.id as string;
+  const storeId = req.tenant!.storeId;
   const [row] = await db
     .select()
     .from(productsTable)
-    .where(eq(productsTable.id, id))
+    .where(and(eq(productsTable.id, id), eq(productsTable.storeId, storeId)))
     .limit(1);
   if (!row) {
     res.status(404).json({ error: "Product not found" });
@@ -82,12 +83,8 @@ const upsertSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
-router.post("/", async (req: AuthRequest, res: Response) => {
-  const storeId = getStoreId(req);
-  if (!storeId) {
-    res.status(400).json({ error: "User has no store assigned" });
-    return;
-  }
+router.post("/", async (req: TenantRequest, res: Response) => {
+  const storeId = req.tenant!.storeId;
   const parsed = upsertSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid body", details: parsed.error.flatten() });
@@ -97,11 +94,13 @@ router.post("/", async (req: AuthRequest, res: Response) => {
     .insert(productsTable)
     .values({ ...parsed.data, storeId })
     .returning();
+  await incrementStoreUsage(storeId, "products", 1);
   res.status(201).json({ product: row });
 });
 
-router.patch("/:id", async (req: AuthRequest, res: Response) => {
+router.patch("/:id", async (req: TenantRequest, res: Response) => {
   const id = req.params.id as string;
+  const storeId = req.tenant!.storeId;
   const parsed = upsertSchema.partial().safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid body" });
@@ -110,7 +109,7 @@ router.patch("/:id", async (req: AuthRequest, res: Response) => {
   const [row] = await db
     .update(productsTable)
     .set({ ...parsed.data, updatedAt: new Date() })
-    .where(eq(productsTable.id, id))
+    .where(and(eq(productsTable.id, id), eq(productsTable.storeId, storeId)))
     .returning();
   if (!row) {
     res.status(404).json({ error: "Product not found" });
@@ -119,11 +118,12 @@ router.patch("/:id", async (req: AuthRequest, res: Response) => {
   res.json({ product: row });
 });
 
-router.delete("/:id", async (req: AuthRequest, res: Response) => {
+router.delete("/:id", async (req: TenantRequest, res: Response) => {
   const id = req.params.id as string;
+  const storeId = req.tenant!.storeId;
   const [row] = await db
     .delete(productsTable)
-    .where(eq(productsTable.id, id))
+    .where(and(eq(productsTable.id, id), eq(productsTable.storeId, storeId)))
     .returning();
   if (!row) {
     res.status(404).json({ error: "Product not found" });

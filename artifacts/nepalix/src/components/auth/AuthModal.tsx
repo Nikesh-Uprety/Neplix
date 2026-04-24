@@ -4,8 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Eye, EyeOff, AlertCircle, LogIn, UserPlus } from "lucide-react";
+import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
 import { googleAuthUrl } from "@/lib/api";
+import { getAuthenticatedHomeRoute } from "@/lib/portal-routing";
 
 function GoogleIcon() {
   return (
@@ -57,6 +59,7 @@ function FieldError({ message }: { message?: string }) {
 }
 
 export function AuthModal({ isOpen, onClose, defaultMode = "login" }: Props) {
+  const [, setLocation] = useLocation();
   const [mode, setMode] = useState<"login" | "register">(defaultMode);
   const [showPass, setShowPass] = useState(false);
   const [serverError, setServerError] = useState("");
@@ -75,8 +78,9 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: Props) {
   async function handleLogin(data: LoginValues) {
     setServerError("");
     try {
-      await login(data.email, data.password);
+      const user = await login(data.email, data.password);
       onClose();
+      setLocation(getAuthenticatedHomeRoute(user));
     } catch (e: unknown) {
       setServerError(e instanceof Error ? e.message : "Login failed");
     }
@@ -85,8 +89,9 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: Props) {
   async function handleRegister(data: RegisterValues) {
     setServerError("");
     try {
-      await register(data);
+      const user = await register(data);
       onClose();
+      setLocation(getAuthenticatedHomeRoute(user));
     } catch (e: unknown) {
       setServerError(e instanceof Error ? e.message : "Registration failed");
     }

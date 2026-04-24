@@ -5,6 +5,7 @@ import {
   subscriptionsTable,
   plansTable,
   paymentsTable,
+  storesTable,
   normalizeAdminRole,
   sanitizeAdminPageOverrides,
 } from "@workspace/db";
@@ -12,6 +13,7 @@ import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { authMiddleware, type AuthRequest } from "../middlewares/auth.js";
 import { requireAdminPanel } from "../middlewares/admin.js";
+import { readFeatureFlags } from "../lib/feature-flags.js";
 
 const router: IRouter = Router();
 
@@ -25,6 +27,19 @@ function requireSuperadminOrOwner(
   const role = normalizeAdminRole(req.user?.role);
   if (role !== "superadmin" && role !== "owner") {
     res.status(403).json({ error: "Superadmin or owner role required" });
+    return;
+  }
+  next();
+}
+
+function requireStoreUserManager(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) {
+  const role = normalizeAdminRole(req.user?.role);
+  if (role !== "superadmin" && role !== "owner" && role !== "admin") {
+    res.status(403).json({ error: "Store user management access denied" });
     return;
   }
   next();
@@ -45,8 +60,16 @@ const listUsersQuerySchema = z.object({
 });
 
 router.get(
-  "/users",
+  "/feature-flags",
   requireSuperadminOrOwner,
+  async (_req: AuthRequest, res: Response) => {
+    res.json({ flags: readFeatureFlags() });
+  },
+);
+
+router.get(
+  "/users",
+  requireStoreUserManager,
   async (req: AuthRequest, res: Response) => {
     const parsed = listUsersQuerySchema.safeParse(req.query);
     if (!parsed.success) {
@@ -107,7 +130,7 @@ const patchUserBodySchema = z.object({
 
 router.patch(
   "/users/:id",
-  requireSuperadminOrOwner,
+  requireStoreUserManager,
   async (req: AuthRequest, res: Response) => {
     const parsed = patchUserBodySchema.safeParse(req.body);
     if (!parsed.success) {
@@ -135,6 +158,8 @@ router.patch(
 
     const actorRole = normalizeAdminRole(req.user?.role);
     const isActorSuperadmin = actorRole === "superadmin";
+    const isActorOwner = actorRole === "owner";
+    const isActorAdmin = actorRole === "admin";
 
     const existingNormalizedRole = normalizeAdminRole(existing.role);
 
@@ -157,6 +182,12 @@ router.patch(
           .json({ error: "Only a superadmin can demote a superadmin" });
         return;
       }
+      if (isActorAdmin && (normalized === "owner" || normalized === "superadmin")) {
+        res
+          .status(403)
+          .json({ error: "Admins cannot assign owner or superadmin roles" });
+        return;
+      }
       finalRole = normalized;
     } else if (
       existingNormalizedRole === "superadmin" &&
@@ -170,6 +201,27 @@ router.patch(
       res
         .status(403)
         .json({ error: "Only a superadmin can modify a superadmin account" });
+      return;
+    }
+
+    if (
+      isActorAdmin &&
+      (existingNormalizedRole === "owner" || existingNormalizedRole === "superadmin")
+    ) {
+      res
+        .status(403)
+        .json({ error: "Admins cannot modify owner or superadmin accounts" });
+      return;
+    }
+
+    if (
+      existingNormalizedRole === "owner" &&
+      !isActorSuperadmin &&
+      !isActorOwner
+    ) {
+      res
+        .status(403)
+        .json({ error: "Only an owner or superadmin can modify an owner account" });
       return;
     }
 
@@ -221,6 +273,71 @@ const listSubscriptionsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional().default(50),
   offset: z.coerce.number().int().min(0).optional().default(0),
 });
+
+router.get(
+  "/stores",
+  requireSuperadminOrOwner,
+  async (req: AuthRequest, res: Response) => {
+    const parsed = listUsersQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Invalid query", details: parsed.error.flatten() });
+      return;
+    }
+    const { q, limit, offset } = parsed.data;
+    const searchCondition = q
+      ? or(ilike(storesTable.name, `%${q}%`), ilike(storesTable.slug, `%${q}%`))
+      : undefined;
+
+    const rowsQuery = db
+      .select({
+        id: storesTable.id,
+        slug: storesTable.slug,
+        name: storesTable.name,
+        status: storesTable.status,
+        planCode: storesTable.planCode,
+        isVerified: storesTable.isVerified,
+        createdAt: storesTable.createdAt,
+      })
+      .from(storesTable)
+      .orderBy(desc(storesTable.createdAt))
+      .limit(limit)
+      .offset(offset);
+    const countQuery = db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(storesTable);
+
+    const [rows, totalRows] = await Promise.all([
+      searchCondition ? rowsQuery.where(searchCondition) : rowsQuery,
+      searchCondition ? countQuery.where(searchCondition) : countQuery,
+    ]);
+
+    res.json({ stores: rows, total: totalRows[0]?.count ?? 0 });
+  },
+);
+
+router.patch(
+  "/stores/:id/status",
+  requireSuperadminOrOwner,
+  async (req: AuthRequest, res: Response) => {
+    const body = z
+      .object({ status: z.enum(["active", "suspended", "archived"]) })
+      .safeParse(req.body);
+    if (!body.success) {
+      res.status(400).json({ error: "Invalid body", details: body.error.flatten() });
+      return;
+    }
+    const [row] = await db
+      .update(storesTable)
+      .set({ status: body.data.status, updatedAt: new Date() })
+      .where(eq(storesTable.id, req.params.id as string))
+      .returning();
+    if (!row) {
+      res.status(404).json({ error: "Store not found" });
+      return;
+    }
+    res.json({ store: row });
+  },
+);
 
 router.get(
   "/subscriptions",
@@ -287,6 +404,15 @@ router.get(
       .from(subscriptionsTable)
       .where(eq(subscriptionsTable.status, "trialing"));
 
+    const [storesCountRow] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(storesTable);
+
+    const [activeStoresRow] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(storesTable)
+      .where(eq(storesTable.status, "active"));
+
     const [revenueRow] = await db
       .select({
         total: sql<number>`COALESCE(SUM(${paymentsTable.amount}), 0)::int`,
@@ -296,6 +422,8 @@ router.get(
 
     res.json({
       usersCount: usersCountRow?.count ?? 0,
+      storesCount: storesCountRow?.count ?? 0,
+      activeStores: activeStoresRow?.count ?? 0,
       activeSubscriptions: activeRow?.count ?? 0,
       trialingSubscriptions: trialingRow?.count ?? 0,
       totalRevenueNpr: revenueRow?.total ?? 0,

@@ -8,7 +8,9 @@ export const usersTable = pgTable("users", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   role: text("role").notNull().default("owner"),
+  // Legacy single-store link kept for backward compatibility during migration.
   storeId: uuid("store_id"),
+  activeStoreId: uuid("active_store_id"),
   adminPageAccess: text("admin_page_access").array(),
   googleId: text("google_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -34,6 +36,7 @@ export type InsertUser = {
   lastName: string;
   role?: string;
   storeId?: string;
+  activeStoreId?: string;
   adminPageAccess?: string[];
   googleId?: string;
 };

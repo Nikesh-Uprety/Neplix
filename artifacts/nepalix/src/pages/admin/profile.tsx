@@ -45,31 +45,31 @@ export default function AdminProfile() {
   return (
     <AdminLayout title="Profile" subtitle="Your account and store details">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-4xl">
-        <div className="rounded-2xl border border-white/5 bg-[#0B1220] p-6">
-          <h3 className="text-sm font-semibold mb-4">Profile</h3>
+        <div className="rounded-xl border border-[#E5E7EB] bg-white p-6 shadow-sm">
+          <h3 className="text-sm font-semibold text-[#111827] mb-4">Profile</h3>
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-white/60">First name</label>
+                <label className="text-xs text-[#6B7280]">First name</label>
                 <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
               </div>
               <div>
-                <label className="text-xs text-white/60">Last name</label>
+                <label className="text-xs text-[#6B7280]">Last name</label>
                 <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
               </div>
             </div>
             <div>
-              <label className="text-xs text-white/60">Email</label>
+              <label className="text-xs text-[#6B7280]">Email</label>
               <Input value={user?.email ?? ""} disabled />
             </div>
-            <div className="grid grid-cols-2 gap-3 text-xs text-white/60">
+            <div className="grid grid-cols-2 gap-3 text-xs text-[#6B7280]">
               <div>
                 <div className="uppercase tracking-wide">Role</div>
-                <div className="text-white capitalize">{user?.role}</div>
+                <div className="text-[#111827] capitalize font-medium">{user?.role}</div>
               </div>
               <div>
                 <div className="uppercase tracking-wide">Store</div>
-                <div className="text-white">{user?.storeId ?? "—"}</div>
+                <div className="text-[#111827] font-medium">{user?.storeId ?? "—"}</div>
               </div>
             </div>
             <Button onClick={saveProfile} disabled={savingProfile}>
@@ -78,15 +78,15 @@ export default function AdminProfile() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/5 bg-[#0B1220] p-6">
-          <h3 className="text-sm font-semibold mb-4">Change password</h3>
+        <div className="rounded-xl border border-[#E5E7EB] bg-white p-6 shadow-sm">
+          <h3 className="text-sm font-semibold text-[#111827] mb-4">Change password</h3>
           <div className="space-y-3">
             <div>
-              <label className="text-xs text-white/60">Current password</label>
+              <label className="text-xs text-[#6B7280]">Current password</label>
               <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
             </div>
             <div>
-              <label className="text-xs text-white/60">New password</label>
+              <label className="text-xs text-[#6B7280]">New password</label>
               <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
             </div>
             <Button
@@ -95,7 +95,7 @@ export default function AdminProfile() {
             >
               {savingPassword ? "Updating…" : "Update password"}
             </Button>
-            <p className="text-xs text-white/40">Min 8 characters.</p>
+            <p className="text-xs text-[#9CA3AF]">Min 8 characters.</p>
           </div>
         </div>
       </div>

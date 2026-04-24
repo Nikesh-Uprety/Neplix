@@ -16,6 +16,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { GlassCard } from "@/components/ui-custom/GlassCard";
+import { getAuthenticatedHomeRoute } from "@/lib/portal-routing";
 import { Link } from "wouter";
 
 const profileSchema = z.object({
@@ -133,7 +134,7 @@ export default function AccountSettings() {
     <div className="pt-24 min-h-[100dvh] bg-[#070B14]">
       <div className="max-w-2xl mx-auto px-4 pb-16">
         <Link
-          href="/dashboard"
+          href={getAuthenticatedHomeRoute(user)}
           className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />

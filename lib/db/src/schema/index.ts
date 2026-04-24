@@ -11,3 +11,6 @@ export * from "./orders";
 export * from "./promo-codes";
 export * from "./notifications";
 export * from "./marketing-campaigns";
+export * from "./stores";
+export * from "./media";
+export * from "./storefront-pages";

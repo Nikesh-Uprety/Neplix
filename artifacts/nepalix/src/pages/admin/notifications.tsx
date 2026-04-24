@@ -6,10 +6,10 @@ import { useToast } from "@/hooks/use-toast";
 import { api, type AdminNotification } from "@/lib/api";
 
 const TYPE_COLORS: Record<string, string> = {
-  info: "bg-cyan-500/15 text-cyan-300",
-  success: "bg-emerald-500/15 text-emerald-300",
-  warning: "bg-amber-500/15 text-amber-300",
-  error: "bg-rose-500/15 text-rose-300",
+  info: "bg-[#DBEAFE] text-[#1D4ED8]",
+  success: "bg-[#DCFCE7] text-[#15803D]",
+  warning: "bg-[#FEF3C7] text-[#B45309]",
+  error: "bg-[#FEE2E2] text-[#DC2626]",
 };
 
 export default function AdminNotifications() {
@@ -54,9 +54,9 @@ export default function AdminNotifications() {
     >
       <div className="space-y-2">
         {loading ? (
-          <div className="text-sm text-white/40 py-10 text-center">Loading…</div>
+          <div className="text-sm text-[#9CA3AF] py-10 text-center">Loading…</div>
         ) : items.length === 0 ? (
-          <div className="rounded-2xl border border-white/5 bg-[#0B1220] p-10 text-center text-white/50">
+          <div className="rounded-xl border border-[#E5E7EB] bg-white p-10 text-center text-[#9CA3AF] shadow-sm">
             <Bell className="h-6 w-6 mx-auto mb-2 opacity-60" />
             You're all caught up.
           </div>
@@ -64,22 +64,22 @@ export default function AdminNotifications() {
           items.map((n) => (
             <div
               key={n.id}
-              className={`rounded-xl border border-white/5 bg-[#0B1220] p-4 flex items-start gap-3 ${
+              className={`rounded-xl border border-[#E5E7EB] bg-white p-4 flex items-start gap-3 shadow-sm ${
                 n.isRead ? "opacity-60" : ""
               }`}
             >
-              <span className={`text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full ${TYPE_COLORS[n.type] ?? "bg-white/5"}`}>
+              <span className={`text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full ${TYPE_COLORS[n.type] ?? "bg-[#F3F4F6] text-[#6B7280]"}`}>
                 {n.type}
               </span>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium">{n.title}</div>
-                {n.body && <div className="text-xs text-white/60 mt-0.5">{n.body}</div>}
-                <div className="text-[11px] text-white/40 mt-1">{new Date(n.createdAt).toLocaleString()}</div>
+                <div className="text-sm font-medium text-[#111827]">{n.title}</div>
+                {n.body && <div className="text-xs text-[#6B7280] mt-0.5">{n.body}</div>}
+                <div className="text-[11px] text-[#9CA3AF] mt-1">{new Date(n.createdAt).toLocaleString()}</div>
               </div>
               {!n.isRead && (
                 <button
                   onClick={() => markOne(n.id)}
-                  className="text-xs text-cyan-300 hover:text-cyan-200"
+                  className="text-xs text-[#5B4FF9] hover:text-[#4338CA]"
                 >
                   Mark read
                 </button>

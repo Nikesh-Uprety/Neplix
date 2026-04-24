@@ -6,7 +6,7 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { api, type AuthUser } from "@/lib/api";
+import { ApiError, api, type AuthStore, type AuthUser } from "@/lib/api";
 
 type AuthContextType = {
   user: AuthUser | null;
@@ -14,14 +14,17 @@ type AuthContextType = {
   isAuthenticated: boolean;
   googleAuthError: boolean;
   clearGoogleAuthError: () => void;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<AuthUser>;
   register: (data: {
     email: string;
     password: string;
     firstName: string;
     lastName: string;
-  }) => Promise<void>;
+  }) => Promise<AuthUser>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<AuthUser | null>;
+  listStores: () => Promise<AuthStore[]>;
+  setActiveStore: (storeId: string) => Promise<AuthUser>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -48,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     const { user } = await api.auth.login({ email, password });
     setUser(user);
+    return user;
   }, []);
 
   const register = useCallback(
@@ -59,13 +63,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }) => {
       const { user } = await api.auth.register(data);
       setUser(user);
+      return user;
     },
     []
   );
 
   const logout = useCallback(async () => {
-    await api.auth.logout();
+    try {
+      await api.auth.logout();
+    } catch (error) {
+      // Expired or already-cleared sessions should still leave the client logged out.
+      if (!(error instanceof ApiError) || error.status !== 401) {
+        throw error;
+      }
+    }
     setUser(null);
+  }, []);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const { user } = await api.auth.me();
+      setUser(user);
+      return user;
+    } catch {
+      setUser(null);
+      return null;
+    }
+  }, []);
+
+  const listStores = useCallback(async () => {
+    const { stores } = await api.auth.stores();
+    return stores;
+  }, []);
+
+  const setActiveStore = useCallback(async (storeId: string) => {
+    const { user } = await api.auth.setActiveStore(storeId);
+    setUser(user);
+    return user;
   }, []);
 
   const clearGoogleAuthError = useCallback(() => setGoogleAuthError(false), []);
@@ -81,6 +115,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
+        refreshUser,
+        listStores,
+        setActiveStore,
       }}
     >
       {children}

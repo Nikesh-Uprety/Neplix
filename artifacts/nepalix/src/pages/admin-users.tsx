@@ -17,6 +17,7 @@ import { useAuth } from "@/context/AuthContext";
 import { api, type AdminUser } from "@/lib/api";
 import { GlassCard } from "@/components/ui-custom/GlassCard";
 import { useToast } from "@/hooks/use-toast";
+import { getAdminHomeRoute } from "@/lib/portal-routing";
 
 const ADMIN_PANEL_ROLES = [
   "superadmin",
@@ -102,7 +103,8 @@ export default function AdminUsers() {
 
   const actorRole = (user?.role ?? "").toLowerCase();
   const isActorSuperadmin = actorRole === "superadmin";
-  const hasAdminAccess = actorRole === "superadmin" || actorRole === "owner";
+  const hasAdminAccess =
+    actorRole === "superadmin" || actorRole === "owner" || actorRole === "admin";
 
   const offset = page * PAGE_LIMIT;
 
@@ -144,10 +146,10 @@ export default function AdminUsers() {
             </h1>
             <p className="text-gray-400 mb-6">
               You do not have permission to manage user accounts. Only
-              superadmins and owners can access this page.
+              superadmins, owners, and admins can access this page.
             </p>
             <Link
-              href="/admin"
+              href={getAdminHomeRoute(user)}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-gray-300 hover:text-white hover:border-white/20 transition-all text-sm"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -165,7 +167,7 @@ export default function AdminUsers() {
         <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
           <div>
             <Link
-              href="/admin"
+              href={getAdminHomeRoute(user)}
               className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-3"
             >
               <ArrowLeft className="w-4 h-4" />

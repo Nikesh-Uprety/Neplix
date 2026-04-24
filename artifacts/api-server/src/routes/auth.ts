@@ -5,6 +5,8 @@ import { db } from "@workspace/db";
 import {
   usersTable,
   sessionsTable,
+  storeMembershipsTable,
+  storesTable,
   registerSchema,
   loginSchema,
   getAdminAllowedPages,
@@ -20,16 +22,18 @@ export function toAuthUserResponse(user: User) {
     lastName: user.lastName,
     role: user.role,
     storeId: user.storeId ?? null,
+    activeStoreId: user.activeStoreId ?? null,
     adminPageAccess: user.adminPageAccess ?? null,
     canAccessAdmin: canAccessAdminPanel(user.role),
     allowedAdminPages: getAdminAllowedPages(user.role, user.adminPageAccess),
     createdAt: user.createdAt,
   };
 }
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { authMiddleware, type AuthRequest } from "../middlewares/auth.js";
 import { createTrialSubscription } from "./subscriptions.js";
 import { logger } from "../lib/logger.js";
+import { provisionStoreForUser } from "../lib/tenant.js";
 
 const router: IRouter = Router();
 
@@ -81,10 +85,16 @@ router.post("/register", async (req: Request, res: Response) => {
 
     try {
       await createTrialSubscription(user.id);
+      await provisionStoreForUser({
+        userId: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+      });
     } catch (err) {
       logger.warn(
         { err, userId: user.id },
-        "Failed to create trial subscription for new user"
+        "Failed to bootstrap tenant resources for new user"
       );
     }
 
@@ -165,6 +175,69 @@ router.get("/me", authMiddleware, (req: AuthRequest, res: Response) => {
   res.json({ user: toAuthUserResponse(user) });
 });
 
+router.get("/stores", authMiddleware, async (req: AuthRequest, res: Response) => {
+  const stores = await db
+    .select({
+      id: storesTable.id,
+      slug: storesTable.slug,
+      name: storesTable.name,
+      role: storeMembershipsTable.role,
+      status: storeMembershipsTable.status,
+    })
+    .from(storeMembershipsTable)
+    .innerJoin(storesTable, eq(storeMembershipsTable.storeId, storesTable.id))
+    .where(
+      and(
+        eq(storeMembershipsTable.userId, req.user!.id),
+        eq(storeMembershipsTable.status, "active"),
+      ),
+    );
+
+  res.json({
+    stores: stores.map((store) => ({
+      ...store,
+      isActive: store.id === (req.user!.activeStoreId ?? req.user!.storeId ?? null),
+    })),
+  });
+});
+
+router.post("/active-store", authMiddleware, async (req: AuthRequest, res: Response) => {
+  const storeId = typeof req.body?.storeId === "string" ? req.body.storeId : "";
+  if (!storeId) {
+    res.status(400).json({ error: "storeId is required" });
+    return;
+  }
+
+  const [membership] = await db
+    .select({ storeId: storeMembershipsTable.storeId })
+    .from(storeMembershipsTable)
+    .where(
+      and(
+        eq(storeMembershipsTable.userId, req.user!.id),
+        eq(storeMembershipsTable.storeId, storeId),
+        eq(storeMembershipsTable.status, "active"),
+      ),
+    )
+    .limit(1);
+
+  if (!membership) {
+    res.status(403).json({ error: "Store membership required" });
+    return;
+  }
+
+  const [user] = await db
+    .update(usersTable)
+    .set({
+      storeId,
+      activeStoreId: storeId,
+      updatedAt: new Date(),
+    })
+    .where(eq(usersTable.id, req.user!.id))
+    .returning();
+
+  res.json({ user: toAuthUserResponse(user) });
+});
+
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const isHostedRuntime =
@@ -196,7 +269,7 @@ const GOOGLE_REDIRECT_URI = getPublicUrlEnv(
   "http://localhost:3000/api/auth/google/callback",
   { requiredForHosted: true }
 );
-const FRONTEND_URL = getPublicUrlEnv("FRONTEND_URL", "http://localhost:5173");
+const FRONTEND_URL = getPublicUrlEnv("FRONTEND_URL", "http://localhost:3000");
 
 router.get("/google", (_req: Request, res: Response) => {
   if (!GOOGLE_CLIENT_ID || !GOOGLE_REDIRECT_URI) {
@@ -281,10 +354,16 @@ router.get("/google/callback", async (req: Request, res: Response) => {
 
       try {
         await createTrialSubscription(user.id);
+        await provisionStoreForUser({
+          userId: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+        });
       } catch (err) {
         logger.warn(
           { err, userId: user.id },
-          "Failed to create trial subscription for new Google user"
+          "Failed to bootstrap tenant resources for new Google user"
         );
       }
     } else if (!user.googleId) {

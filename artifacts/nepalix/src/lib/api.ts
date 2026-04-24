@@ -2,6 +2,16 @@ const rawApiUrl = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
 const API_BASE = rawApiUrl ? `${rawApiUrl}/api` : "/api";
 export const googleAuthUrl = `${API_BASE}/auth/google`;
 
+export class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 type RequestOptions = {
   method?: string;
   body?: unknown;
@@ -38,7 +48,10 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   if (!res.ok) {
     const err = data as Record<string, unknown>;
-    throw new Error(typeof err?.error === "string" ? err.error : `Request failed: ${res.status}`);
+    throw new ApiError(
+      typeof err?.error === "string" ? err.error : `Request failed: ${res.status}`,
+      res.status,
+    );
   }
 
   return data as T;
@@ -51,10 +64,45 @@ export type AuthUser = {
   lastName: string;
   role: string;
   storeId: string | null;
+  activeStoreId: string | null;
   adminPageAccess: string[] | null;
   canAccessAdmin: boolean;
   allowedAdminPages: string[];
   createdAt: string;
+};
+
+export type AuthStore = {
+  id: string;
+  slug: string;
+  name: string;
+  role: string;
+  status: string;
+  isActive: boolean;
+};
+
+export type PublicStorePage = {
+  id: string;
+  slug: string;
+  title: string;
+  content: unknown;
+  isPublished: boolean;
+  updatedAt: string;
+};
+
+export type PublicStore = {
+  id: string;
+  slug: string;
+  name: string;
+  legalName: string | null;
+  planCode: string;
+  status: string;
+  settings: {
+    timezone?: string;
+    currency?: string;
+    locale?: string;
+    contactEmail?: string;
+    contactPhone?: string;
+  } | null;
 };
 
 export type AdminProduct = {
@@ -262,7 +310,53 @@ export type AdminUser = {
   updatedAt: string;
 };
 
-export type PlanSlug = "trial" | "starter" | "growth" | "pro" | "elite";
+export type AdminStore = {
+  id: string;
+  slug: string;
+  name: string;
+  status: "active" | "suspended" | "archived";
+  planCode: string;
+  isVerified: boolean;
+  createdAt: string;
+};
+
+export type AdminFeatureFlags = Record<string, boolean>;
+
+export type AdminMediaBucket = {
+  id: string;
+  storeId: string;
+  name: string;
+  slug: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminMediaAsset = {
+  id: string;
+  storeId: string;
+  bucketId: string | null;
+  title: string | null;
+  url: string;
+  mimeType: string | null;
+  sizeBytes: string | null;
+  metadata: unknown;
+  isStorefront: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminStorefrontPage = {
+  id: string;
+  storeId: string;
+  slug: string;
+  title: string;
+  content: unknown;
+  isPublished: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PlanSlug = "free" | "starter" | "business" | "enterprise";
 
 export type PlanFeatures = {
   ordersPerYear: number | null;
@@ -348,6 +442,12 @@ export const api = {
       request<{ success: boolean }>("/auth/logout", { method: "POST" }),
 
     me: () => request<{ user: AuthUser }>("/auth/me"),
+    stores: () => request<{ stores: AuthStore[] }>("/auth/stores"),
+    setActiveStore: (storeId: string) =>
+      request<{ user: AuthUser }>("/auth/active-store", {
+        method: "POST",
+        body: { storeId },
+      }),
   },
 
   demoBookings: {
@@ -389,6 +489,11 @@ export const api = {
         method: "PATCH",
         body: { status },
       }),
+  },
+
+  stores: {
+    getPublic: (slug: string) =>
+      request<{ store: PublicStore; pages: PublicStorePage[] }>(`/stores/${slug}`),
   },
 
   account: {
@@ -474,10 +579,13 @@ export const api = {
     },
     stats: () => request<{
       usersCount: number;
+      storesCount: number;
+      activeStores: number;
       activeSubscriptions: number;
       trialingSubscriptions: number;
       totalRevenueNpr: number;
     }>("/admin/stats"),
+    featureFlags: () => request<{ flags: AdminFeatureFlags }>("/admin/feature-flags"),
 
     products: {
       list: (params: { q?: string; status?: string; limit?: number; offset?: number } = {}) => {
@@ -596,6 +704,80 @@ export const api = {
           bills: AdminBill[];
           summary: { totalRevenue: number; pending: number; verified: number; failed: number };
         }>("/admin/bills"),
+    },
+    stores: {
+      list: (params: { q?: string; limit?: number; offset?: number } = {}) => {
+        const q = new URLSearchParams();
+        if (params.q) q.set("q", params.q);
+        if (params.limit !== undefined) q.set("limit", String(params.limit));
+        if (params.offset !== undefined) q.set("offset", String(params.offset));
+        const qs = q.toString();
+        return request<{ stores: AdminStore[]; total: number }>(`/admin/stores${qs ? `?${qs}` : ""}`);
+      },
+      updateStatus: (id: string, status: "active" | "suspended" | "archived") =>
+        request<{ store: AdminStore }>(`/admin/stores/${id}/status`, {
+          method: "PATCH",
+          body: { status },
+        }),
+    },
+    pos: {
+      products: () =>
+        request<{ products: Array<{ id: string; name: string; price: number; stock: number; sku: string | null }> }>(
+          "/admin/pos/products",
+        ),
+      orders: () => request<{ orders: AdminOrderListItem[] }>("/admin/pos/orders"),
+      checkout: (payload: {
+        items: Array<{ productId: string; name: string; price: number; quantity: number }>;
+        tax?: number;
+      }) => request<{ order: AdminOrderListItem }>("/admin/pos/checkout", { method: "POST", body: payload }),
+    },
+    media: {
+      listImages: () => request<{ assets: AdminMediaAsset[] }>("/admin/media/images"),
+      createImage: (payload: {
+        title?: string;
+        url: string;
+        bucketId?: string;
+        mimeType?: string;
+        isStorefront?: boolean;
+      }) => request<{ asset: AdminMediaAsset }>("/admin/media/images", { method: "POST", body: payload }),
+      deleteImage: (id: string) =>
+        request<{ success: boolean }>(`/admin/media/images/${id}`, { method: "DELETE" }),
+      listBuckets: () => request<{ buckets: AdminMediaBucket[] }>("/admin/media/buckets"),
+      createBucket: (payload: { name: string; slug: string }) =>
+        request<{ bucket: AdminMediaBucket }>("/admin/media/buckets", { method: "POST", body: payload }),
+      listStorefrontImages: () =>
+        request<{ assets: AdminMediaAsset[] }>("/admin/media/storefront-images"),
+    },
+    landing: {
+      listPages: () => request<{ pages: AdminStorefrontPage[] }>("/admin/landing/pages"),
+      createPage: (payload: {
+        slug: string;
+        title: string;
+        content?: unknown;
+        isPublished?: boolean;
+      }) =>
+        request<{ page: AdminStorefrontPage }>("/admin/landing/pages", { method: "POST", body: payload }),
+      updatePage: (
+        id: string,
+        payload: Partial<{
+          slug: string;
+          title: string;
+          content: unknown;
+          isPublished: boolean;
+        }>,
+      ) =>
+        request<{ page: AdminStorefrontPage }>(`/admin/landing/pages/${id}`, {
+          method: "PATCH",
+          body: payload,
+        }),
+      deletePage: (id: string) =>
+        request<{ success: boolean }>(`/admin/landing/pages/${id}`, { method: "DELETE" }),
+    },
+    logs: {
+      recent: () =>
+        request<{ events: Array<{ type: string; id: string; label: string; createdAt: string }> }>(
+          "/admin/logs/recent",
+        ),
     },
   },
 };

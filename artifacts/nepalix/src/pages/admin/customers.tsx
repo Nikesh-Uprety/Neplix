@@ -126,7 +126,7 @@ export default function AdminCustomers() {
     >
       <div className="flex items-center gap-3 mb-4">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF]" />
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -138,9 +138,9 @@ export default function AdminCustomers() {
         <Button variant="outline" size="sm" onClick={load}>Search</Button>
       </div>
 
-      <div className="rounded-2xl border border-white/5 bg-[#0B1220] overflow-hidden">
+      <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-sm overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-white/[0.03] text-white/60 text-xs uppercase tracking-wide">
+          <thead className="bg-[#FAFBFF] text-[#9CA3AF] text-xs uppercase tracking-wide">
             <tr>
               <th className="text-left px-4 py-3">Name</th>
               <th className="text-left px-4 py-3">Email</th>
@@ -152,21 +152,21 @@ export default function AdminCustomers() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-white/50">Loading…</td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-[#9CA3AF]">Loading…</td></tr>
             ) : items.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-white/50">No customers yet.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-[#9CA3AF]">No customers yet.</td></tr>
             ) : (
               items.map((c) => (
-                <tr key={c.id} className="border-t border-white/5 hover:bg-white/[0.02]">
-                  <td className="px-4 py-3">{c.firstName} {c.lastName}</td>
-                  <td className="px-4 py-3 text-white/70">{c.email}</td>
-                  <td className="px-4 py-3 text-white/60">{c.phone ?? "—"}</td>
-                  <td className="px-4 py-3 text-right">{c.ordersCount}</td>
-                  <td className="px-4 py-3 text-right">Rs {c.totalSpent.toLocaleString()}</td>
+                <tr key={c.id} className="border-t border-[#F3F4F6] hover:bg-[#FAFBFF]">
+                  <td className="px-4 py-3 text-[#111827] font-medium">{c.firstName} {c.lastName}</td>
+                  <td className="px-4 py-3 text-[#374151]">{c.email}</td>
+                  <td className="px-4 py-3 text-[#6B7280]">{c.phone ?? "—"}</td>
+                  <td className="px-4 py-3 text-right text-[#111827]">{c.ordersCount}</td>
+                  <td className="px-4 py-3 text-right text-[#111827] font-medium">Rs {c.totalSpent.toLocaleString()}</td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => remove(c)}
-                      className="text-rose-300 hover:text-rose-200 p-1"
+                      className="text-[#DC2626] hover:text-[#B91C1C] p-1"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>

@@ -25,6 +25,7 @@ import {
 } from "@/lib/api";
 import { GlassCard } from "@/components/ui-custom/GlassCard";
 import { useToast } from "@/hooks/use-toast";
+import { getAuthenticatedHomeRoute } from "@/lib/portal-routing";
 
 type Provider = "khalti" | "esewa";
 
@@ -284,7 +285,7 @@ export default function Billing() {
     <div className="pt-24 min-h-[100dvh] bg-[#070B14]">
       <div className="max-w-5xl mx-auto px-4 pb-20">
         <Link
-          href="/dashboard"
+          href={getAuthenticatedHomeRoute(user)}
           className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />

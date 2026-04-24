@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Nepalix — Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'Helvetica Neue', 'sans-serif'],
+          sora: ['Sora', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;-webkit-font-smoothing:antialiased}
+body{font-family:'Inter','Helvetica Neue',sans-serif;background:#F5F7FA;color:#111827;line-height:1.5;overflow-x:hidden}
+.sora{font-family:'Sora',sans-serif}
+.mono{font-family:'JetBrains Mono',monospace}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#D1D5DB;border-radius:8px}
+::-webkit-scrollbar-thumb:hover{background:#9CA3AF}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.fade-in{animation:fadeIn 0.3s ease both}
+.slide-up{animation:slideUp 0.25s ease both}
+.sidebar-bg{background:#0F1117;border-right:1px solid rgba(255,255,255,0.06)}
+/* Tweak panel */
+#tweak-panel{position:fixed;bottom:20px;right:20px;z-index:9000;width:236px;background:white;border:1px solid #E5E7EB;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.15);padding:16px;display:none}
+#tweak-panel.tp-active{display:block}
+#tweak-panel h3{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:#9CA3AF;margin-bottom:12px}
+#tweak-panel label{display:block;font-size:11px;font-weight:600;color:#374151;margin-bottom:4px;margin-top:10px}
+#tweak-panel select{width:100%;padding:5px 8px;border:1px solid #E5E7EB;border-radius:6px;background:white;font-size:12px;color:#374151}
+#tweak-panel input[type=color]{width:100%;height:32px;border:1px solid #E5E7EB;border-radius:6px;padding:2px;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="nepalix-ui.jsx"></script>
+<script type="text/babel" src="nepalix-pages.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+const { I, Btn, Badge, Card, Input, ProgressBar, SidebarItem, Modal, cn, fmtNPR } = window;
+const {
+  BillingPage, DashboardPage, OrdersPage, POSPage, InventoryPage,
+  CustomersPage, OnlineStorePage, StaffPage, SettingsPage,
+  SA_TenantsPage, SA_AnalyticsPage, SA_SubscriptionsPage, SA_TicketsPage
+} = window;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{"accentColor":"#5B4FF9","density":"comfortable","sidebarStyle":"dark"}/*EDITMODE-END*/;
+
+// ── LOGIN ─────────────────────────────────────────────────────────────────────
+const LoginPage = ({ onLogin }) => {
+  const [email, setEmail] = useState('aarav@rareatelier.com');
+  const [pass, setPass] = useState('');
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#F5F7FA] p-4">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2.5 mb-3">
+            <div className="w-9 h-9 rounded-xl bg-[#5B4FF9] flex items-center justify-center shadow-lg shadow-[#5B4FF9]/30">
+              <span className="text-white font-black text-base sora">N</span>
+            </div>
+            <span className="text-2xl font-black text-[#111827] sora tracking-tight">NEPALIX</span>
+          </div>
+          <p className="text-sm text-[#9CA3AF]">Commerce OS for Nepal</p>
+        </div>
+        <Card className="p-6 shadow-xl shadow-black/5 border-[#E5E7EB]">
+          <h2 className="text-lg font-bold text-[#111827] mb-0.5">Welcome back</h2>
+          <p className="text-xs text-[#9CA3AF] mb-5">Sign in to your Nepalix admin panel</p>
+          <div className="space-y-3 mb-5">
+            <Input label="Email" type="email" value={email} onChange={e=>setEmail(e.target.value)} icon={<I.Mail size={13}/>}/>
+            <Input label="Password" type="password" value={pass} onChange={e=>setPass(e.target.value)} placeholder="Enter your password"/>
+          </div>
+          <button onClick={()=>onLogin('store')}
+            className="w-full h-10 rounded-lg bg-[#5B4FF9] text-white text-sm font-bold hover:bg-[#4338CA] transition-all active:scale-[0.98] shadow-md shadow-[#5B4FF9]/25">
+            Sign In to Store Admin
+          </button>
+          <div className="flex items-center gap-3 my-4">
+            <div className="flex-1 h-px bg-[#F3F4F6]"/>
+            <span className="text-[11px] text-[#9CA3AF] font-medium">OR</span>
+            <div className="flex-1 h-px bg-[#F3F4F6]"/>
+          </div>
+          <button onClick={()=>onLogin('superadmin')}
+            className="w-full h-10 rounded-lg border border-[#E5E7EB] text-sm font-semibold text-[#374151] hover:bg-[#F9FAFB] transition-all flex items-center justify-center gap-2">
+            <I.Shield size={14}/>Sign in as Super Admin
+          </button>
+          <p className="text-center text-xs text-[#9CA3AF] mt-4">
+            No account?{' '}
+            <button className="text-[#5B4FF9] font-semibold hover:underline" onClick={()=>onLogin('new')}>
+              Start 14-day free trial
+            </button>
+          </p>
+        </Card>
+        <p className="text-center text-[11px] text-[#9CA3AF] mt-5">Nepal's #1 Commerce OS · nepalix.com</p>
+      </div>
+    </div>
+  );
+};
+
+// ── PLAN SELECTION ────────────────────────────────────────────────────────────
+const PlanSelectPage = ({ onNext, onBack }) => {
+  const [billing, setBilling] = useState('monthly');
+  const [selected, setSelected] = useState('growth');
+  const plans = [
+    { id:'starter', name:'Starter', monthly:499, annual:399, color:'#6B7280',
+      desc:'Perfect for new stores',
+      features:['50 products','100 orders/month','1 staff account','Basic analytics','POS terminal','Online store','Email support'] },
+    { id:'growth', name:'Growth', monthly:999, annual:799, color:'#5B4FF9', popular:true,
+      desc:'For growing businesses',
+      features:['500 products','Unlimited orders','5 staff accounts','Advanced analytics','Multi-terminal POS','Custom domain','Priority support','Promo codes & discounts','Marketing tools'] },
+    { id:'pro', name:'Pro', monthly:1999, annual:1599, color:'#D97706',
+      desc:'High-volume & enterprise',
+      features:['Unlimited products','Unlimited orders','Unlimited staff','Real-time analytics','Enterprise POS','Custom domain','24/7 phone support','Full API access','White-label option','Advanced reports'] },
+  ];
+  return (
+    <div className="min-h-screen bg-[#F5F7FA] py-12 px-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2.5 mb-4">
+            <div className="w-8 h-8 rounded-xl bg-[#5B4FF9] flex items-center justify-center"><span className="text-white font-black text-sm sora">N</span></div>
+            <span className="text-xl font-black text-[#111827] sora">NEPALIX</span>
+          </div>
+          <h1 className="text-3xl font-black text-[#111827] sora tracking-tight mb-2">Choose your plan</h1>
+          <p className="text-sm text-[#6B7280]">Start with a 14-day free trial. No credit card required.</p>
+          <div className="inline-flex items-center gap-1 p-1 bg-white border border-[#E5E7EB] rounded-xl mt-5 shadow-sm">
+            {['monthly','annual'].map(c=>(
+              <button key={c} onClick={()=>setBilling(c)}
+                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${billing===c?'bg-[#5B4FF9] text-white shadow-sm':'text-[#6B7280] hover:text-[#374151]'}`}>
+                {c==='annual'
+                  ? <span>Annual <span className="ml-1 bg-[#DCFCE7] text-[#16A34A] px-1.5 py-0.5 rounded-full text-[9px] font-black">SAVE 20%</span></span>
+                  : 'Monthly'}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          {plans.map(plan=>(
+            <div key={plan.id} onClick={()=>setSelected(plan.id)}
+              className="bg-white rounded-2xl border-2 p-6 cursor-pointer transition-all relative"
+              style={selected===plan.id?{borderColor:plan.color,boxShadow:`0 8px 40px ${plan.color}20`}:{borderColor:'#E5E7EB'}}>
+              {plan.popular && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-[#5B4FF9] text-white text-[9px] font-black rounded-full tracking-widest whitespace-nowrap">MOST POPULAR</div>
+              )}
+              <div className="mb-5">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-base font-black" style={{color:plan.color}}>{plan.name}</span>
+                  {selected===plan.id && <I.CheckC size={14} style={{color:plan.color}}/>}
+                </div>
+                <p className="text-xs text-[#9CA3AF]">{plan.desc}</p>
+                <div className="mt-3">
+                  <span className="text-3xl font-black text-[#111827]">{fmtNPR(billing==='monthly'?plan.monthly:plan.annual)}</span>
+                  <span className="text-xs text-[#9CA3AF] ml-1">/month</span>
+                </div>
+                {billing==='annual' && <p className="text-[10px] text-[#16A34A] font-semibold mt-0.5">Save रू {(plan.monthly-plan.annual)*12} per year</p>}
+              </div>
+              <div className="space-y-2">
+                {plan.features.map(f=>(
+                  <div key={f} className="flex items-start gap-2 text-xs text-[#374151]">
+                    <I.Check size={12} className="flex-shrink-0 mt-0.5" style={{color:plan.color}}/>
+                    {f}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-col items-center gap-3">
+          <button onClick={onNext}
+            className="w-full max-w-sm h-12 rounded-xl bg-[#5B4FF9] text-white font-bold text-sm hover:bg-[#4338CA] transition-all active:scale-[0.98] shadow-lg shadow-[#5B4FF9]/30">
+            Start 14-Day Free Trial →
+          </button>
+          <p className="text-xs text-[#9CA3AF]">No credit card needed. Cancel anytime.</p>
+          <button onClick={onBack} className="text-xs text-[#6B7280] hover:text-[#374151]">← Back to login</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── STORE SETUP ───────────────────────────────────────────────────────────────
+const StoreSetupPage = ({ onFinish }) => {
+  const [step, setStep] = useState(1);
+  const [storeName, setStoreName] = useState('');
+  const [category, setCategory] = useState('');
+  const [domain, setDomain] = useState('');
+  const slug = domain || 'my-store';
+  return (
+    <div className="min-h-screen bg-[#F5F7FA] flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2.5 mb-2">
+            <div className="w-7 h-7 rounded-xl bg-[#5B4FF9] flex items-center justify-center"><span className="text-white font-black text-xs sora">N</span></div>
+            <span className="text-xl font-black text-[#111827] sora">NEPALIX</span>
+          </div>
+          <p className="text-[11px] text-[#9CA3AF] font-medium">Step {step} of 3 — Store Setup</p>
+          <div className="flex gap-2 justify-center mt-3">
+            {[1,2,3].map(s=>(
+              <div key={s} className={`h-1.5 rounded-full transition-all duration-300 ${s<=step?'bg-[#5B4FF9]':'bg-[#E5E7EB]'} ${s===step?'w-10':'w-5'}`}/>
+            ))}
+          </div>
+        </div>
+        <Card className="p-6 shadow-xl shadow-black/5">
+          {step===1 && (
+            <div className="space-y-4 fade-in">
+              <div>
+                <h2 className="text-lg font-bold text-[#111827]">Name your store</h2>
+                <p className="text-xs text-[#9CA3AF] mt-0.5">How your customers will know you.</p>
+              </div>
+              <Input label="Store Name" placeholder="e.g. Himalayan Craft" value={storeName} onChange={e=>setStoreName(e.target.value)}/>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-semibold text-[#374151] uppercase tracking-wide">Store Category</label>
+                <select value={category} onChange={e=>setCategory(e.target.value)}
+                  className="w-full h-9 rounded-lg border border-[#E5E7EB] bg-white text-sm px-3 text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#5B4FF9]/30 focus:border-[#5B4FF9]">
+                  <option value="">Select a category…</option>
+                  <option>Fashion & Apparel</option><option>Electronics</option><option>Food & Beverage</option>
+                  <option>Handicrafts & Art</option><option>Health & Beauty</option><option>Books & Stationery</option><option>Other</option>
+                </select>
+              </div>
+              <button onClick={()=>setStep(2)} disabled={!storeName||!category}
+                className="w-full h-10 rounded-lg bg-[#5B4FF9] text-white text-sm font-bold hover:bg-[#4338CA] transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                Continue →
+              </button>
+            </div>
+          )}
+          {step===2 && (
+            <div className="space-y-4 fade-in">
+              <div>
+                <h2 className="text-lg font-bold text-[#111827]">Set your store URL</h2>
+                <p className="text-xs text-[#9CA3AF] mt-0.5">Pick your Nepalix subdomain.</p>
+              </div>
+              <Input label="Subdomain" placeholder="yourstore" value={domain}
+                onChange={e=>setDomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,''))}/>
+              {domain && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-[#F0FDF4] border border-[#DCFCE7]">
+                  <I.CheckC size={14} style={{color:'#16A34A'}}/>
+                  <span className="text-xs font-mono font-semibold text-[#16A34A]">{domain}.nepalix.store</span>
+                  <Badge variant="success" className="ml-auto">Available</Badge>
+                </div>
+              )}
+              <div className="p-3 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] text-xs text-[#6B7280]">
+                <span className="font-semibold text-[#374151]">Custom domain?</span> Connect yourshop.com from Settings after setup — free with all plans.
+              </div>
+              <div className="flex gap-2">
+                <button onClick={()=>setStep(1)} className="flex-1 h-9 rounded-lg border border-[#E5E7EB] text-sm font-semibold text-[#374151] hover:bg-[#F9FAFB]">← Back</button>
+                <button onClick={()=>setStep(3)} disabled={!domain}
+                  className="flex-1 h-9 rounded-lg bg-[#5B4FF9] text-white text-sm font-bold hover:bg-[#4338CA] transition-all disabled:opacity-40">
+                  Continue →
+                </button>
+              </div>
+            </div>
+          )}
+          {step===3 && (
+            <div className="space-y-4 fade-in">
+              <div>
+                <h2 className="text-lg font-bold text-[#111827]">You're all set! 🎉</h2>
+                <p className="text-xs text-[#9CA3AF] mt-0.5">Review before launching your store.</p>
+              </div>
+              <div className="rounded-xl bg-[#F9FAFB] border border-[#E5E7EB] p-4 space-y-2.5">
+                {[
+                  ['Store Name', storeName||'My Store'],
+                  ['Category', category||'Fashion'],
+                  ['Store URL', `${slug}.nepalix.store`],
+                  ['Plan', 'Growth — 14-day free trial'],
+                  ['Trial Ends', 'May 7, 2026'],
+                ].map(([l,v])=>(
+                  <div key={l} className="flex justify-between items-center">
+                    <span className="text-xs text-[#9CA3AF]">{l}</span>
+                    <span className="text-xs font-semibold text-[#111827]">{v}</span>
+                  </div>
+                ))}
+              </div>
+              <button onClick={onFinish}
+                className="w-full h-10 rounded-lg bg-[#16A34A] text-white text-sm font-bold hover:bg-[#15803D] transition-all active:scale-[0.98]">
+                🚀 Launch My Store
+              </button>
+              <button onClick={()=>setStep(2)} className="w-full text-xs text-[#9CA3AF] hover:text-[#6B7280]">← Back</button>
+            </div>
+          )}
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+// ── ADMIN SHELL ───────────────────────────────────────────────────────────────
+const STORE_NAV = [
+  { id:'dashboard', label:'Dashboard', icon:I.Grid },
+  { id:'orders',    label:'Orders',    icon:I.Bag,   badge:'18' },
+  { id:'pos',       label:'Point of Sale', icon:I.Card },
+  { id:'inventory', label:'Inventory', icon:I.Box },
+  { id:'customers', label:'Customers', icon:I.Users },
+  { id:'store',     label:'Online Store', icon:I.Store },
+  { id:'staff',     label:'Staff & Roles', icon:I.Shield },
+  { id:'marketing', label:'Marketing', icon:I.Mega },
+  { id:'analytics', label:'Analytics', icon:I.Chart },
+  { id:'billing',   label:'Billing & Plan', icon:I.Rcpt, badge:'TRIAL' },
+  { id:'settings',  label:'Settings',  icon:I.Cog },
+];
+const SUPER_NAV = [
+  { id:'tenants',       label:'All Stores',         icon:I.Building },
+  { id:'analytics',     label:'Platform Analytics', icon:I.Chart },
+  { id:'subscriptions', label:'Subscriptions',      icon:I.Rcpt },
+  { id:'tickets',       label:'Support Tickets',    icon:I.Ticket, badge:'2' },
+  { id:'flags',         label:'Feature Flags',      icon:I.Zap },
+  { id:'settings',      label:'Platform Settings',  icon:I.Cog },
+];
+
+const PageRenderer = ({ page, mode }) => {
+  if (mode==='superadmin') {
+    if (page==='tenants')       return <SA_TenantsPage/>;
+    if (page==='analytics')     return <SA_AnalyticsPage/>;
+    if (page==='subscriptions') return <SA_SubscriptionsPage/>;
+    if (page==='tickets')       return <SA_TicketsPage/>;
+  }
+  if (page==='billing')   return <BillingPage/>;
+  if (page==='dashboard') return <DashboardPage/>;
+  if (page==='orders')    return <OrdersPage/>;
+  if (page==='pos')       return <POSPage/>;
+  if (page==='inventory') return <InventoryPage/>;
+  if (page==='customers') return <CustomersPage/>;
+  if (page==='store')     return <OnlineStorePage/>;
+  if (page==='staff')     return <StaffPage/>;
+  if (page==='settings')  return <SettingsPage/>;
+  return (
+    <div className="flex flex-col items-center justify-center h-64 text-[#9CA3AF]">
+      <I.Zap size={30} className="mb-3" style={{opacity:0.3}}/>
+      <p className="text-sm font-semibold capitalize">{page} — Coming Soon</p>
+    </div>
+  );
+};
+
+const AdminShell = ({ mode, onLogout }) => {
+  const defaultPage = mode==='superadmin' ? 'tenants' : 'billing';
+  const [page, setPage]           = useState(()=>localStorage.getItem('np-page-'+mode)||defaultPage);
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [notifOpen, setNotifOpen]   = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [tweaks, setTweaks]         = useState(TWEAK_DEFAULTS);
+  const [tweakVisible, setTweakVisible] = useState(false);
+
+  const isSA = mode==='superadmin';
+  const nav  = isSA ? SUPER_NAV : STORE_NAV;
+  const accent = tweaks.accentColor || '#5B4FF9';
+
+  useEffect(()=>{ localStorage.setItem('np-page-'+mode, page); }, [page, mode]);
+
+  useEffect(()=>{
+    const handler = (e) => {
+      if (e.data?.type==='__activate_edit_mode')   setTweakVisible(true);
+      if (e.data?.type==='__deactivate_edit_mode') setTweakVisible(false);
+    };
+    window.addEventListener('message', handler);
+    window.parent.postMessage({type:'__edit_mode_available'}, '*');
+    return ()=>window.removeEventListener('message', handler);
+  }, []);
+
+  const setTweak = (k,v) => {
+    const next = {...tweaks, [k]:v};
+    setTweaks(next);
+    window.parent.postMessage({type:'__edit_mode_set_keys', edits:{[k]:v}}, '*');
+  };
+
+  const navigate = (id) => { setPage(id); setMobileOpen(false); setNotifOpen(false); setProfileOpen(false); };
+
+  const crumb = nav.find(n=>n.id===page)?.label || page;
+
+  const SidebarInner = () => (
+    <>
+      {/* Brand */}
+      <div className={`flex items-center ${collapsed?'justify-center px-3':'px-4'} py-4 border-b border-[rgba(255,255,255,0.07)]`}>
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md"
+          style={{background:accent}}>
+          <span className="text-white font-black text-sm sora">N</span>
+        </div>
+        {!collapsed && (
+          <div className="ml-2.5 min-w-0 overflow-hidden">
+            <p className="text-sm font-black text-white sora tracking-tight truncate">NEPALIX</p>
+            <p className="text-[9px] font-semibold uppercase tracking-widest truncate"
+              style={{color:`${accent}cc`}}>{isSA?'Super Admin':'Store Admin'}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Store context chip */}
+      {!collapsed && !isSA && (
+        <div className="mx-3 mt-3 p-2.5 rounded-lg bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.07)]">
+          <p className="text-[9px] text-[rgba(255,255,255,0.38)] font-bold uppercase tracking-widest mb-0.5">Active Store</p>
+          <p className="text-xs font-bold text-white truncate">Rare Atelier</p>
+          <p className="text-[10px] text-[rgba(255,255,255,0.35)] truncate">rareatelier.nepalix.store</p>
+        </div>
+      )}
+
+      {/* Nav items */}
+      <div className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5">
+        {nav.map(item=>(
+          <SidebarItem key={item.id} icon={item.icon} label={item.label} badge={item.badge}
+            active={page===item.id} collapsed={collapsed} onClick={()=>navigate(item.id)}/>
+        ))}
+      </div>
+
+      {/* Footer */}
+      <div className="px-2 pb-3 pt-2 border-t border-[rgba(255,255,255,0.07)] space-y-0.5">
+        <button onClick={onLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[rgba(255,255,255,0.38)] hover:bg-[rgba(220,38,38,0.15)] hover:text-[#FCA5A5] transition-all text-[12px] font-semibold">
+          <I.Out size={14}/>{!collapsed && 'Sign Out'}
+        </button>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-[#F5F7FA]">
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div className="fixed inset-0 bg-black/60 z-[80] lg:hidden" onClick={()=>setMobileOpen(false)}/>
+      )}
+      {/* Mobile sidebar */}
+      <div className={`fixed top-0 left-0 bottom-0 w-60 sidebar-bg z-[90] flex flex-col transition-transform duration-300 lg:hidden ${mobileOpen?'translate-x-0':'-translate-x-full'}`}>
+        <SidebarInner/>
+      </div>
+
+      {/* Desktop sidebar */}
+      <div className={`hidden lg:flex flex-col sidebar-bg flex-shrink-0 transition-all duration-300 ease-out ${collapsed?'w-[60px]':'w-[228px]'}`}>
+        <SidebarInner/>
+      </div>
+
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Header */}
+        <header className="h-14 bg-white/80 backdrop-blur-xl border-b border-[#E5E7EB]/80 flex items-center px-4 gap-3 flex-shrink-0 sticky top-0 z-40 shadow-sm shadow-black/[0.03]">
+          {/* Mobile toggle */}
+          <button className="lg:hidden text-[#6B7280] hover:text-[#374151] flex-shrink-0" onClick={()=>setMobileOpen(true)}>
+            <I.Menu size={18}/>
+          </button>
+          {/* Desktop collapse */}
+          <button className="hidden lg:flex text-[#9CA3AF] hover:text-[#6B7280] w-7 h-7 items-center justify-center rounded-lg hover:bg-[#F3F4F6] transition-all flex-shrink-0"
+            onClick={()=>setCollapsed(c=>!c)}>
+            {collapsed ? <I.CRight size={14}/> : <I.CLeft size={14}/>}
+          </button>
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1.5 text-xs min-w-0 flex-1">
+            <span className="font-semibold text-[#9CA3AF] hidden sm:inline">{isSA?'Super Admin':'Nepalix'}</span>
+            <I.CRight size={10} className="text-[#D1D5DB] hidden sm:inline flex-shrink-0"/>
+            <span className="font-bold text-[#111827] truncate">{crumb}</span>
+          </div>
+          {/* Right side */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {!isSA && (
+              <a href="#" className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-lg bg-[#F3F4F6] text-[#6B7280] text-xs font-medium hover:bg-[#E5E7EB] transition-all">
+                <I.ELink size={12}/>View Store
+              </a>
+            )}
+            {/* Notifications */}
+            <div className="relative">
+              <button className="w-8 h-8 rounded-lg border border-[#E5E7EB] bg-white flex items-center justify-center text-[#6B7280] hover:bg-[#F9FAFB] relative transition-all"
+                onClick={()=>{ setNotifOpen(o=>!o); setProfileOpen(false); }}>
+                <I.Bell size={14}/>
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#DC2626] text-white text-[9px] font-black flex items-center justify-center">3</span>
+              </button>
+              {notifOpen && (
+                <div className="absolute right-0 top-10 w-72 bg-white rounded-xl border border-[#E5E7EB] shadow-xl z-[60] overflow-hidden slide-up">
+                  <div className="px-4 py-3 border-b border-[#F3F4F6] flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#111827]">Notifications</span>
+                    <span className="text-[10px] font-semibold cursor-pointer" style={{color:accent}}>Mark all read</span>
+                  </div>
+                  {[
+                    {t:'New order received',d:'ORD-2841 · रू 4,200',time:'2m ago',new:true},
+                    {t:'Low stock alert',d:'Denim Jacket — 3 left',time:'1h ago',new:true},
+                    {t:'Payment confirmed',d:'ORD-2838 · Sita Gurung',time:'3h ago',new:false},
+                  ].map((n,i)=>(
+                    <div key={i} className={`px-4 py-3 hover:bg-[#FAFBFF] flex gap-3 cursor-pointer ${n.new?'bg-[#FAFBFF]':''}`}>
+                      <div className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${n.new?'':'opacity-0'}`} style={{background:accent}}/>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-[#111827]">{n.t}</p>
+                        <p className="text-[10px] text-[#9CA3AF]">{n.d}</p>
+                      </div>
+                      <span className="text-[10px] text-[#9CA3AF] flex-shrink-0">{n.time}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* Profile */}
+            <div className="relative">
+              <button className="w-8 h-8 rounded-full border-2 flex items-center justify-center font-black text-xs text-white"
+                style={{borderColor:accent, background:accent}}
+                onClick={()=>{ setProfileOpen(o=>!o); setNotifOpen(false); }}>
+                AS
+              </button>
+              {profileOpen && (
+                <div className="absolute right-0 top-10 w-52 bg-white rounded-xl border border-[#E5E7EB] shadow-xl z-[60] overflow-hidden slide-up">
+                  <div className="px-4 py-3 border-b border-[#F3F4F6]">
+                    <p className="text-xs font-bold text-[#111827]">Aarav Sharma</p>
+                    <p className="text-[10px] text-[#9CA3AF]">aarav@rareatelier.com</p>
+                    {isSA && <span className="inline-block mt-1"><Badge variant="purple">Super Admin</Badge></span>}
+                  </div>
+                  <div className="py-1">
+                    {[['Account',I.User],['Settings',I.Cog],['Billing',I.Rcpt]].map(([l,Ico])=>(
+                      !isSA || l!=='Billing' ? (
+                        <button key={l} className="w-full px-4 py-2 text-xs text-[#374151] hover:bg-[#F9FAFB] text-left flex items-center gap-2">
+                          <Ico size={12}/>{l}
+                        </button>
+                      ) : null
+                    ))}
+                  </div>
+                  <div className="border-t border-[#F3F4F6] p-1.5">
+                    <button onClick={onLogout} className="w-full px-3 py-2 text-xs text-[#DC2626] hover:bg-[#FEE2E2] rounded-lg text-left flex items-center gap-2 font-medium">
+                      <I.Out size={12}/>Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Page */}
+        <main className={`flex-1 overflow-y-auto ${page==='pos'?'':'p-5 sm:p-7 md:p-8'}`}>
+          <div className="fade-in max-w-[1280px] mx-auto" key={page+mode}>
+            <PageRenderer page={page} mode={mode}/>
+          </div>
+        </main>
+      </div>
+
+      {/* Tweak panel */}
+      <div id="tweak-panel" className={tweakVisible?'tp-active':''}>
+        <h3>Tweaks</h3>
+        <label>Accent Color</label>
+        <input type="color" value={tweaks.accentColor} onChange={e=>setTweak('accentColor',e.target.value)}/>
+        <label>Content Density</label>
+        <select value={tweaks.density} onChange={e=>setTweak('density',e.target.value)}>
+          <option value="comfortable">Comfortable</option>
+          <option value="compact">Compact</option>
+        </select>
+        <label>Switch View</label>
+        <select value={mode} onChange={e=>window._nepSetMode&&window._nepSetMode(e.target.value)}>
+          <option value="store">Store Admin</option>
+          <option value="superadmin">Super Admin</option>
+        </select>
+        <div style={{marginTop:12,paddingTop:10,borderTop:'1px solid #F3F4F6'}}>
+          <p style={{fontSize:'10px',color:'#9CA3AF'}}>Changes persist on reload.</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── APP ───────────────────────────────────────────────────────────────────────
+const App = () => {
+  const [screen, setScreen] = useState(()=>localStorage.getItem('np-screen')||'login');
+  const [mode,   setMode]   = useState(()=>localStorage.getItem('np-mode')||'store');
+
+  window._nepSetMode = (m) => { setMode(m); localStorage.setItem('np-mode',m); };
+
+  useEffect(()=>{ localStorage.setItem('np-screen', screen); }, [screen]);
+
+  const handleLogin = (type) => {
+    if (type==='new') { setScreen('plan'); return; }
+    setMode(type);
+    localStorage.setItem('np-mode', type);
+    setScreen('admin');
+  };
+
+  if (screen==='login') return <LoginPage onLogin={handleLogin}/>;
+  if (screen==='plan')  return <PlanSelectPage onNext={()=>setScreen('setup')} onBack={()=>setScreen('login')}/>;
+  if (screen==='setup') return <StoreSetupPage onFinish={()=>{ setMode('store'); setScreen('admin'); }}/>;
+  return <AdminShell mode={mode} onLogout={()=>{ localStorage.removeItem('np-screen'); setScreen('login'); }}/>;
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

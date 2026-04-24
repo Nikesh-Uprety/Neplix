@@ -2,11 +2,15 @@ import { Router, type IRouter, type Response } from "express";
 import { db, ordersTable, customersTable } from "@workspace/db";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
-import { authMiddleware, type AuthRequest } from "../middlewares/auth.js";
+import { authMiddleware } from "../middlewares/auth.js";
 import { requireAdminPage } from "../middlewares/admin.js";
+import {
+  resolveTenantContext,
+  type TenantRequest,
+} from "../middlewares/tenant.js";
 
 const router: IRouter = Router();
-router.use(authMiddleware, requireAdminPage("orders"));
+router.use(authMiddleware, resolveTenantContext, requireAdminPage("orders"));
 
 const listQuery = z.object({
   status: z.string().optional(),
@@ -15,8 +19,8 @@ const listQuery = z.object({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
-router.get("/", async (req: AuthRequest, res: Response) => {
-  const storeId = req.user?.storeId;
+router.get("/", async (req: TenantRequest, res: Response) => {
+  const storeId = req.tenant!.storeId;
   const parsed = listQuery.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid query" });
@@ -63,12 +67,13 @@ router.get("/", async (req: AuthRequest, res: Response) => {
   res.json({ orders: rows, total: totalRows[0]?.count ?? 0 });
 });
 
-router.get("/:id", async (req: AuthRequest, res: Response) => {
+router.get("/:id", async (req: TenantRequest, res: Response) => {
   const id = req.params.id as string;
+  const storeId = req.tenant!.storeId;
   const [row] = await db
     .select()
     .from(ordersTable)
-    .where(eq(ordersTable.id, id))
+    .where(and(eq(ordersTable.id, id), eq(ordersTable.storeId, storeId)))
     .limit(1);
   if (!row) {
     res.status(404).json({ error: "Order not found" });
@@ -79,7 +84,7 @@ router.get("/:id", async (req: AuthRequest, res: Response) => {
     const [c] = await db
       .select()
       .from(customersTable)
-      .where(eq(customersTable.id, row.customerId))
+      .where(and(eq(customersTable.id, row.customerId), eq(customersTable.storeId, storeId)))
       .limit(1);
     customer = c ?? null;
   }
@@ -93,8 +98,9 @@ const updateSchema = z.object({
   paymentStatus: z.enum(["unpaid", "paid", "refunded", "failed"]).optional(),
 });
 
-router.patch("/:id", async (req: AuthRequest, res: Response) => {
+router.patch("/:id", async (req: TenantRequest, res: Response) => {
   const id = req.params.id as string;
+  const storeId = req.tenant!.storeId;
   const parsed = updateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid body" });
@@ -103,7 +109,7 @@ router.patch("/:id", async (req: AuthRequest, res: Response) => {
   const [row] = await db
     .update(ordersTable)
     .set({ ...parsed.data, updatedAt: new Date() })
-    .where(eq(ordersTable.id, id))
+    .where(and(eq(ordersTable.id, id), eq(ordersTable.storeId, storeId)))
     .returning();
   if (!row) {
     res.status(404).json({ error: "Order not found" });

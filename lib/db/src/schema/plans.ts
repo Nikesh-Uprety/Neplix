@@ -9,11 +9,10 @@ import {
 } from "drizzle-orm/pg-core";
 
 export type PlanSlug =
-  | "trial"
+  | "free"
   | "starter"
-  | "growth"
-  | "pro"
-  | "elite";
+  | "business"
+  | "enterprise";
 
 export type PlanFeatures = {
   ordersPerYear: number | null;

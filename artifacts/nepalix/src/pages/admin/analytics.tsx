@@ -41,15 +41,19 @@ export default function AdminAnalytics() {
         <StatCard label="Products" value={(overview?.products ?? 0).toLocaleString()} accent="amber" />
       </div>
 
-      <div className="rounded-2xl border border-white/5 bg-[#0B1220] p-5 mb-6">
+      <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-sm p-5 mb-6">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold">Orders · last {days} days</h3>
+          <h3 className="text-sm font-bold text-[#111827]">Orders · last {days} days</h3>
           <div className="flex gap-2">
             {[7, 14, 30, 90].map((d) => (
               <button
                 key={d}
                 onClick={() => setDays(d)}
-                className={`text-xs px-2 py-1 rounded ${days === d ? "bg-white/10 text-white" : "text-white/50 hover:text-white"}`}
+                className={`text-xs px-2 py-1 rounded-md border ${
+                  days === d
+                    ? "bg-[#5B4FF9] border-[#5B4FF9] text-white"
+                    : "bg-white border-[#E5E7EB] text-[#6B7280] hover:border-[#C4B5FD] hover:text-[#111827]"
+                }`}
               >
                 {d}d
               </button>
@@ -57,14 +61,17 @@ export default function AdminAnalytics() {
           </div>
         </div>
         {trend.length === 0 ? (
-          <div className="h-40 flex items-center justify-center text-sm text-white/40">No data yet</div>
+          <div className="h-40 flex items-center justify-center text-sm text-[#9CA3AF]">No data yet</div>
         ) : (
           <div className="h-40 flex items-end gap-1">
             {trend.map((p) => (
               <div key={p.day} className="flex-1" title={`${p.day} · ${p.orders} orders`}>
                 <div
-                  className="w-full bg-gradient-to-t from-purple-500/30 to-purple-400/80 rounded-t"
-                  style={{ height: `${Math.max(2, (p.orders / maxOrders) * 100)}%` }}
+                  className="w-full rounded-t-md"
+                  style={{
+                    height: `${Math.max(2, (p.orders / maxOrders) * 100)}%`,
+                    background: p === trend[trend.length - 1] ? "#5B4FF9" : "#EEF2FF",
+                  }}
                 />
               </div>
             ))}
@@ -72,16 +79,16 @@ export default function AdminAnalytics() {
         )}
       </div>
 
-      <div className="rounded-2xl border border-white/5 bg-[#0B1220] p-5">
-        <h3 className="text-sm font-semibold mb-3">Top products</h3>
+      <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-sm p-5">
+        <h3 className="text-sm font-bold text-[#111827] mb-3">Top products</h3>
         {top.length === 0 ? (
-          <div className="text-sm text-white/40">No product data yet</div>
+          <div className="text-sm text-[#9CA3AF]">No product data yet</div>
         ) : (
-          <ul className="divide-y divide-white/5">
+          <ul className="divide-y divide-[#F3F4F6]">
             {top.map((p) => (
               <li key={p.id} className="flex items-center justify-between py-2 text-sm">
-                <span>{p.name}</span>
-                <span className="text-white/60">stock {p.stock} · Rs {p.price.toLocaleString()}</span>
+                <span className="text-[#111827] font-medium">{p.name}</span>
+                <span className="text-[#6B7280]">stock {p.stock} · Rs {p.price.toLocaleString()}</span>
               </li>
             ))}
           </ul>

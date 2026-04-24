@@ -19,26 +19,26 @@ export default function AdminMessages() {
     <AdminLayout title="Messages" subtitle="Inbound contact form messages">
       <div className="space-y-3">
         {loading ? (
-          <div className="text-sm text-white/40 py-10 text-center">Loading…</div>
+          <div className="text-sm text-[#9CA3AF] py-10 text-center">Loading…</div>
         ) : messages.length === 0 ? (
-          <div className="rounded-2xl border border-white/5 bg-[#0B1220] p-10 text-center text-white/50">
+          <div className="rounded-xl border border-[#E5E7EB] bg-white p-10 text-center text-[#9CA3AF] shadow-sm">
             No messages yet.
           </div>
         ) : (
           messages.map((m) => (
-            <div key={m.id} className="rounded-xl border border-white/5 bg-[#0B1220] p-4">
+            <div key={m.id} className="rounded-xl border border-[#E5E7EB] bg-white p-4 shadow-sm">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="font-medium text-sm">{m.subject}</div>
-                  <div className="text-xs text-white/60 mt-0.5">
-                    {m.name} · <span className="text-white/40">{m.email}</span>
+                  <div className="font-medium text-sm text-[#111827]">{m.subject}</div>
+                  <div className="text-xs text-[#6B7280] mt-0.5">
+                    {m.name} · <span className="text-[#9CA3AF]">{m.email}</span>
                   </div>
                 </div>
-                <span className="text-[11px] text-white/40">
+                <span className="text-[11px] text-[#9CA3AF]">
                   {new Date(m.createdAt).toLocaleDateString()}
                 </span>
               </div>
-              <p className="text-sm text-white/80 mt-3 whitespace-pre-wrap">{m.message}</p>
+              <p className="text-sm text-[#374151] mt-3 whitespace-pre-wrap">{m.message}</p>
             </div>
           ))
         )}

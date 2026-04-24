@@ -1,7 +1,7 @@
 import type { PlanFeatures, PlanSlug } from "@workspace/db";
 
 export const FEATURE_MATRIX: Record<PlanSlug, PlanFeatures> = {
-  trial: {
+  free: {
     ordersPerYear: 100,
     products: 20,
     staff: 1,
@@ -31,7 +31,7 @@ export const FEATURE_MATRIX: Record<PlanSlug, PlanFeatures> = {
     customIntegrations: false,
     dedicatedManager: false,
   },
-  growth: {
+  business: {
     ordersPerYear: 20000,
     products: 1000,
     staff: 8,
@@ -46,7 +46,7 @@ export const FEATURE_MATRIX: Record<PlanSlug, PlanFeatures> = {
     customIntegrations: false,
     dedicatedManager: false,
   },
-  pro: {
+  enterprise: {
     ordersPerYear: 50000,
     products: 2500,
     staff: 25,
@@ -60,21 +60,6 @@ export const FEATURE_MATRIX: Record<PlanSlug, PlanFeatures> = {
     prioritySupport: true,
     customIntegrations: false,
     dedicatedManager: false,
-  },
-  elite: {
-    ordersPerYear: null,
-    products: null,
-    staff: 50,
-    locations: null,
-    pos: true,
-    advancedInventory: true,
-    abandonedCart: true,
-    funnelBuilder: true,
-    upsellCrossSell: true,
-    analyticsLevel: "enterprise",
-    prioritySupport: true,
-    customIntegrations: true,
-    dedicatedManager: true,
   },
 };
 
@@ -94,7 +79,7 @@ export function hasFeature(
 }
 
 export function minimumPlanFor(feature: FeatureKey): PlanSlug | null {
-  const order: PlanSlug[] = ["trial", "starter", "growth", "pro", "elite"];
+  const order: PlanSlug[] = ["free", "starter", "business", "enterprise"];
   for (const slug of order) {
     if (hasFeature(slug, feature)) return slug;
   }

@@ -1,16 +1,19 @@
 import { Router, type IRouter, type Response } from "express";
 import { db, marketingCampaignsTable } from "@workspace/db";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { authMiddleware, type AuthRequest } from "../middlewares/auth.js";
+import { authMiddleware } from "../middlewares/auth.js";
 import { requireAdminPage } from "../middlewares/admin.js";
+import {
+  resolveTenantContext,
+  type TenantRequest,
+} from "../middlewares/tenant.js";
 
 const router: IRouter = Router();
-router.use(authMiddleware, requireAdminPage("marketing"));
+router.use(authMiddleware, resolveTenantContext, requireAdminPage("marketing"));
 
-router.get("/", async (req: AuthRequest, res: Response) => {
-  const storeId = req.user?.storeId;
-  const where = storeId ? eq(marketingCampaignsTable.storeId, storeId) : undefined;
+router.get("/", async (req: TenantRequest, res: Response) => {
+  const where = eq(marketingCampaignsTable.storeId, req.tenant!.storeId);
   const q = db
     .select()
     .from(marketingCampaignsTable)
@@ -29,12 +32,8 @@ const upsertSchema = z.object({
   scheduledAt: z.coerce.date().optional(),
 });
 
-router.post("/", async (req: AuthRequest, res: Response) => {
-  const storeId = req.user?.storeId;
-  if (!storeId) {
-    res.status(400).json({ error: "User has no store assigned" });
-    return;
-  }
+router.post("/", async (req: TenantRequest, res: Response) => {
+  const storeId = req.tenant!.storeId;
   const parsed = upsertSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid body" });
@@ -47,8 +46,9 @@ router.post("/", async (req: AuthRequest, res: Response) => {
   res.status(201).json({ campaign: row });
 });
 
-router.patch("/:id", async (req: AuthRequest, res: Response) => {
+router.patch("/:id", async (req: TenantRequest, res: Response) => {
   const id = req.params.id as string;
+  const storeId = req.tenant!.storeId;
   const parsed = upsertSchema.partial().safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid body" });
@@ -57,7 +57,7 @@ router.patch("/:id", async (req: AuthRequest, res: Response) => {
   const [row] = await db
     .update(marketingCampaignsTable)
     .set({ ...parsed.data, updatedAt: new Date() })
-    .where(eq(marketingCampaignsTable.id, id))
+    .where(and(eq(marketingCampaignsTable.id, id), eq(marketingCampaignsTable.storeId, storeId)))
     .returning();
   if (!row) {
     res.status(404).json({ error: "Campaign not found" });
@@ -66,11 +66,11 @@ router.patch("/:id", async (req: AuthRequest, res: Response) => {
   res.json({ campaign: row });
 });
 
-router.delete("/:id", async (req: AuthRequest, res: Response) => {
+router.delete("/:id", async (req: TenantRequest, res: Response) => {
   const id = req.params.id as string;
   await db
     .delete(marketingCampaignsTable)
-    .where(eq(marketingCampaignsTable.id, id));
+    .where(and(eq(marketingCampaignsTable.id, id), eq(marketingCampaignsTable.storeId, req.tenant!.storeId)));
   res.json({ success: true });
 });
 

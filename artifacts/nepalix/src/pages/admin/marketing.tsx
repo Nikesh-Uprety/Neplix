@@ -26,10 +26,10 @@ function CreateModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
   };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-      <div className="w-full max-w-md rounded-2xl bg-[#0B1220] border border-white/10 p-6">
+      <div className="w-full max-w-md rounded-2xl bg-white border border-[#E5E7EB] p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold">New campaign</h3>
-          <button onClick={onClose}><X className="h-5 w-5 text-white/60" /></button>
+          <h3 className="font-semibold text-[#111827]">New campaign</h3>
+          <button onClick={onClose}><X className="h-5 w-5 text-[#9CA3AF] hover:text-[#111827]" /></button>
         </div>
         <div className="space-y-3">
           <Input
@@ -115,9 +115,9 @@ export default function AdminMarketing() {
         </Button>
       }
     >
-      <div className="rounded-2xl border border-white/5 bg-[#0B1220] overflow-hidden">
+      <div className="rounded-xl border border-[#E5E7EB] bg-white shadow-sm overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-white/[0.03] text-white/60 text-xs uppercase tracking-wide">
+          <thead className="bg-[#FAFBFF] text-[#9CA3AF] text-xs uppercase tracking-wide">
             <tr>
               <th className="text-left px-4 py-3">Name</th>
               <th className="text-left px-4 py-3">Channel</th>
@@ -130,22 +130,24 @@ export default function AdminMarketing() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} className="px-4 py-10 text-center text-white/50">Loading…</td></tr>
+              <tr><td colSpan={7} className="px-4 py-10 text-center text-[#9CA3AF]">Loading…</td></tr>
             ) : items.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-10 text-center text-white/50">No campaigns yet.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-10 text-center text-[#9CA3AF]">No campaigns yet.</td></tr>
             ) : (
               items.map((c) => (
-                <tr key={c.id} className="border-t border-white/5 hover:bg-white/[0.02]">
-                  <td className="px-4 py-3">{c.name}</td>
-                  <td className="px-4 py-3 capitalize">{c.channel}</td>
+                <tr key={c.id} className="border-t border-[#F3F4F6] hover:bg-[#FAFBFF]">
+                  <td className="px-4 py-3 font-medium text-[#111827]">{c.name}</td>
+                  <td className="px-4 py-3 capitalize text-[#6B7280]">{c.channel}</td>
                   <td className="px-4 py-3">
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-white/5 capitalize">{c.status}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-[#F3F4F6] text-[#6B7280] capitalize">
+                      {c.status}
+                    </span>
                   </td>
-                  <td className="px-4 py-3 text-right">{c.sentCount}</td>
-                  <td className="px-4 py-3 text-right">{c.openCount}</td>
-                  <td className="px-4 py-3 text-right">{c.clickCount}</td>
+                  <td className="px-4 py-3 text-right text-[#111827]">{c.sentCount}</td>
+                  <td className="px-4 py-3 text-right text-[#111827]">{c.openCount}</td>
+                  <td className="px-4 py-3 text-right text-[#111827]">{c.clickCount}</td>
                   <td className="px-4 py-3 text-right">
-                    <button onClick={() => remove(c)} className="text-rose-300 hover:text-rose-200 p-1">
+                    <button onClick={() => remove(c)} className="text-[#DC2626] hover:text-[#B91C1C] p-1">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </td>

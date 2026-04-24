@@ -5,7 +5,7 @@ import { logger } from "./lib/logger.js";
 const isVercelRuntime = process.env["VERCEL"] === "1";
 
 if (!isVercelRuntime) {
-  const rawPort = process.env["PORT"] ?? "3000";
+  const rawPort = process.env["PORT"] ?? "4000";
   const port = Number(rawPort);
 
   if (Number.isNaN(port) || port <= 0) {

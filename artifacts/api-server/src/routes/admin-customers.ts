@@ -2,11 +2,16 @@ import { Router, type IRouter, type Response } from "express";
 import { db, customersTable, ordersTable } from "@workspace/db";
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { z } from "zod";
-import { authMiddleware, type AuthRequest } from "../middlewares/auth.js";
+import { authMiddleware } from "../middlewares/auth.js";
 import { requireAdminPage } from "../middlewares/admin.js";
+import {
+  resolveTenantContext,
+  type TenantRequest,
+} from "../middlewares/tenant.js";
+import { incrementStoreUsage } from "../lib/usage.js";
 
 const router: IRouter = Router();
-router.use(authMiddleware, requireAdminPage("customers"));
+router.use(authMiddleware, resolveTenantContext, requireAdminPage("customers"));
 
 const listQuery = z.object({
   q: z.string().trim().min(1).optional(),
@@ -14,8 +19,8 @@ const listQuery = z.object({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
-router.get("/", async (req: AuthRequest, res: Response) => {
-  const storeId = req.user?.storeId;
+router.get("/", async (req: TenantRequest, res: Response) => {
+  const storeId = req.tenant!.storeId;
   const parsed = listQuery.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid query" });
@@ -63,12 +68,13 @@ router.get("/", async (req: AuthRequest, res: Response) => {
   res.json({ customers: rows, total: totalRows[0]?.count ?? 0 });
 });
 
-router.get("/:id", async (req: AuthRequest, res: Response) => {
+router.get("/:id", async (req: TenantRequest, res: Response) => {
   const id = req.params.id as string;
+  const storeId = req.tenant!.storeId;
   const [row] = await db
     .select()
     .from(customersTable)
-    .where(eq(customersTable.id, id))
+    .where(and(eq(customersTable.id, id), eq(customersTable.storeId, storeId)))
     .limit(1);
   if (!row) {
     res.status(404).json({ error: "Customer not found" });
@@ -77,7 +83,7 @@ router.get("/:id", async (req: AuthRequest, res: Response) => {
   const orders = await db
     .select()
     .from(ordersTable)
-    .where(eq(ordersTable.customerId, id))
+    .where(and(eq(ordersTable.customerId, id), eq(ordersTable.storeId, storeId)))
     .orderBy(desc(ordersTable.createdAt))
     .limit(50);
   res.json({ customer: row, orders });
@@ -91,12 +97,8 @@ const upsertSchema = z.object({
   notes: z.string().optional(),
 });
 
-router.post("/", async (req: AuthRequest, res: Response) => {
-  const storeId = req.user?.storeId;
-  if (!storeId) {
-    res.status(400).json({ error: "User has no store assigned" });
-    return;
-  }
+router.post("/", async (req: TenantRequest, res: Response) => {
+  const storeId = req.tenant!.storeId;
   const parsed = upsertSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid body" });
@@ -106,11 +108,13 @@ router.post("/", async (req: AuthRequest, res: Response) => {
     .insert(customersTable)
     .values({ ...parsed.data, storeId })
     .returning();
+  await incrementStoreUsage(storeId, "customers", 1);
   res.status(201).json({ customer: row });
 });
 
-router.patch("/:id", async (req: AuthRequest, res: Response) => {
+router.patch("/:id", async (req: TenantRequest, res: Response) => {
   const id = req.params.id as string;
+  const storeId = req.tenant!.storeId;
   const parsed = upsertSchema.partial().safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid body" });
@@ -119,7 +123,7 @@ router.patch("/:id", async (req: AuthRequest, res: Response) => {
   const [row] = await db
     .update(customersTable)
     .set({ ...parsed.data, updatedAt: new Date() })
-    .where(eq(customersTable.id, id))
+    .where(and(eq(customersTable.id, id), eq(customersTable.storeId, storeId)))
     .returning();
   if (!row) {
     res.status(404).json({ error: "Customer not found" });
@@ -128,9 +132,11 @@ router.patch("/:id", async (req: AuthRequest, res: Response) => {
   res.json({ customer: row });
 });
 
-router.delete("/:id", async (req: AuthRequest, res: Response) => {
+router.delete("/:id", async (req: TenantRequest, res: Response) => {
   const id = req.params.id as string;
-  await db.delete(customersTable).where(eq(customersTable.id, id));
+  await db
+    .delete(customersTable)
+    .where(and(eq(customersTable.id, id), eq(customersTable.storeId, req.tenant!.storeId)));
   res.json({ success: true });
 });
 

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { getAuthenticatedHomeRoute } from "@/lib/portal-routing";
 
 const navLinks = [
   { label: "Product", href: "/product" },
@@ -28,7 +29,7 @@ export function Navbar() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -42,6 +43,14 @@ export function Navbar() {
     setMobileOpen(false);
     setMegaOpen(false);
     setUserMenuOpen(false);
+  }, [location]);
+
+  useEffect(() => {
+    const authIntent = new URLSearchParams(window.location.search).get("auth");
+    if (authIntent !== "login" && authIntent !== "register") return;
+
+    setAuthMode(authIntent);
+    setAuthModalOpen(true);
   }, [location]);
 
   useEffect(() => {
@@ -70,6 +79,20 @@ export function Navbar() {
   async function handleLogout() {
     await logout();
     setUserMenuOpen(false);
+    setMobileOpen(false);
+    setLocation("/?auth=login");
+  }
+
+  function handleAuthModalClose() {
+    setAuthModalOpen(false);
+
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has("auth")) return;
+
+    params.delete("auth");
+    const next = params.toString();
+    const target = `${window.location.pathname}${next ? `?${next}` : ""}`;
+    window.history.replaceState({}, "", target);
   }
 
   return (
@@ -182,7 +205,7 @@ export function Navbar() {
                         </p>
                       </div>
                       <Link
-                        href="/dashboard"
+                        href={getAuthenticatedHomeRoute(user)}
                         className="flex items-center gap-2 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
                       >
                         <LayoutDashboard className="w-4 h-4" />
@@ -323,7 +346,7 @@ export function Navbar() {
               {isAuthenticated ? (
                 <>
                   <Link
-                    href="/dashboard"
+                    href={getAuthenticatedHomeRoute(user)}
                     className="flex items-center gap-3 px-4 py-3 text-lg font-medium text-gray-200 hover:text-white rounded-xl hover:bg-white/5 transition-colors"
                   >
                     <LayoutDashboard className="w-5 h-5" />
@@ -369,7 +392,7 @@ export function Navbar() {
 
       <AuthModal
         isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
+        onClose={handleAuthModalClose}
         defaultMode={authMode}
       />
     </>

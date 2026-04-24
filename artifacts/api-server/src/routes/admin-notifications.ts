@@ -2,15 +2,19 @@ import { Router, type IRouter, type Response } from "express";
 import { db, notificationsTable } from "@workspace/db";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
-import { authMiddleware, type AuthRequest } from "../middlewares/auth.js";
+import { authMiddleware } from "../middlewares/auth.js";
 import { requireAdminPage } from "../middlewares/admin.js";
+import {
+  resolveTenantContext,
+  type TenantRequest,
+} from "../middlewares/tenant.js";
 
 const router: IRouter = Router();
-router.use(authMiddleware, requireAdminPage("notifications"));
+router.use(authMiddleware, resolveTenantContext, requireAdminPage("notifications"));
 
-router.get("/", async (req: AuthRequest, res: Response) => {
-  const storeId = req.user?.storeId;
-  const where = storeId ? eq(notificationsTable.storeId, storeId) : undefined;
+router.get("/", async (req: TenantRequest, res: Response) => {
+  const storeId = req.tenant!.storeId;
+  const where = eq(notificationsTable.storeId, storeId);
   const q = db
     .select()
     .from(notificationsTable)
@@ -26,12 +30,13 @@ router.get("/", async (req: AuthRequest, res: Response) => {
   res.json({ notifications: rows, unread: unread?.count ?? 0 });
 });
 
-router.post("/:id/read", async (req: AuthRequest, res: Response) => {
+router.post("/:id/read", async (req: TenantRequest, res: Response) => {
   const id = req.params.id as string;
+  const storeId = req.tenant!.storeId;
   const [row] = await db
     .update(notificationsTable)
     .set({ isRead: true })
-    .where(eq(notificationsTable.id, id))
+    .where(and(eq(notificationsTable.id, id), eq(notificationsTable.storeId, storeId)))
     .returning();
   if (!row) {
     res.status(404).json({ error: "Notification not found" });
@@ -40,14 +45,9 @@ router.post("/:id/read", async (req: AuthRequest, res: Response) => {
   res.json({ notification: row });
 });
 
-router.post("/read-all", async (req: AuthRequest, res: Response) => {
-  const storeId = req.user?.storeId;
-  const where = storeId ? eq(notificationsTable.storeId, storeId) : undefined;
-  if (where) {
-    await db.update(notificationsTable).set({ isRead: true }).where(where);
-  } else {
-    await db.update(notificationsTable).set({ isRead: true });
-  }
+router.post("/read-all", async (req: TenantRequest, res: Response) => {
+  const where = eq(notificationsTable.storeId, req.tenant!.storeId);
+  await db.update(notificationsTable).set({ isRead: true }).where(where);
   res.json({ success: true });
 });
 
@@ -58,12 +58,8 @@ const createSchema = z.object({
   link: z.string().optional(),
 });
 
-router.post("/", async (req: AuthRequest, res: Response) => {
-  const storeId = req.user?.storeId;
-  if (!storeId) {
-    res.status(400).json({ error: "User has no store assigned" });
-    return;
-  }
+router.post("/", async (req: TenantRequest, res: Response) => {
+  const storeId = req.tenant!.storeId;
   const parsed = createSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid body" });
@@ -71,7 +67,7 @@ router.post("/", async (req: AuthRequest, res: Response) => {
   }
   const [row] = await db
     .insert(notificationsTable)
-    .values({ ...parsed.data, storeId, userId: req.user?.id })
+    .values({ ...parsed.data, storeId, userId: req.user!.id })
     .returning();
   res.status(201).json({ notification: row });
 });

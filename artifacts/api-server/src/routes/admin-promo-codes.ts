@@ -2,15 +2,18 @@ import { Router, type IRouter, type Response } from "express";
 import { db, promoCodesTable } from "@workspace/db";
 import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { authMiddleware, type AuthRequest } from "../middlewares/auth.js";
+import { authMiddleware } from "../middlewares/auth.js";
 import { requireAdminPage } from "../middlewares/admin.js";
+import {
+  resolveTenantContext,
+  type TenantRequest,
+} from "../middlewares/tenant.js";
 
 const router: IRouter = Router();
-router.use(authMiddleware, requireAdminPage("promo-codes"));
+router.use(authMiddleware, resolveTenantContext, requireAdminPage("promo-codes"));
 
-router.get("/", async (req: AuthRequest, res: Response) => {
-  const storeId = req.user?.storeId;
-  const where = storeId ? eq(promoCodesTable.storeId, storeId) : undefined;
+router.get("/", async (req: TenantRequest, res: Response) => {
+  const where = eq(promoCodesTable.storeId, req.tenant!.storeId);
   const q = db
     .select()
     .from(promoCodesTable)
@@ -32,12 +35,8 @@ const upsertSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
-router.post("/", async (req: AuthRequest, res: Response) => {
-  const storeId = req.user?.storeId;
-  if (!storeId) {
-    res.status(400).json({ error: "User has no store assigned" });
-    return;
-  }
+router.post("/", async (req: TenantRequest, res: Response) => {
+  const storeId = req.tenant!.storeId;
   const parsed = upsertSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid body", details: parsed.error.flatten() });
@@ -50,8 +49,9 @@ router.post("/", async (req: AuthRequest, res: Response) => {
   res.status(201).json({ promoCode: row });
 });
 
-router.patch("/:id", async (req: AuthRequest, res: Response) => {
+router.patch("/:id", async (req: TenantRequest, res: Response) => {
   const id = req.params.id as string;
+  const storeId = req.tenant!.storeId;
   const parsed = upsertSchema.partial().safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid body" });
@@ -60,7 +60,7 @@ router.patch("/:id", async (req: AuthRequest, res: Response) => {
   const [row] = await db
     .update(promoCodesTable)
     .set({ ...parsed.data, updatedAt: new Date() })
-    .where(eq(promoCodesTable.id, id))
+    .where(and(eq(promoCodesTable.id, id), eq(promoCodesTable.storeId, storeId)))
     .returning();
   if (!row) {
     res.status(404).json({ error: "Promo code not found" });
@@ -69,9 +69,11 @@ router.patch("/:id", async (req: AuthRequest, res: Response) => {
   res.json({ promoCode: row });
 });
 
-router.delete("/:id", async (req: AuthRequest, res: Response) => {
+router.delete("/:id", async (req: TenantRequest, res: Response) => {
   const id = req.params.id as string;
-  await db.delete(promoCodesTable).where(eq(promoCodesTable.id, id));
+  await db
+    .delete(promoCodesTable)
+    .where(and(eq(promoCodesTable.id, id), eq(promoCodesTable.storeId, req.tenant!.storeId)));
   res.json({ success: true });
 });
 

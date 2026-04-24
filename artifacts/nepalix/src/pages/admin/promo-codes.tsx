@@ -32,10 +32,10 @@ function CreateModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
   };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-      <div className="w-full max-w-md rounded-2xl bg-[#0B1220] border border-white/10 p-6">
+      <div className="w-full max-w-md rounded-2xl bg-white border border-[#E5E7EB] p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold">New promo code</h3>
-          <button onClick={onClose}><X className="h-5 w-5 text-white/60" /></button>
+          <h3 className="font-semibold text-[#111827]">New promo code</h3>
+          <button onClick={onClose}><X className="h-5 w-5 text-[#9CA3AF] hover:text-[#111827]" /></button>
         </div>
         <div className="space-y-3">
           <Input
@@ -128,9 +128,9 @@ export default function AdminPromoCodes() {
         </Button>
       }
     >
-      <div className="rounded-2xl border border-white/5 bg-[#0B1220] overflow-hidden">
+      <div className="rounded-xl border border-[#E5E7EB] bg-white shadow-sm overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-white/[0.03] text-white/60 text-xs uppercase tracking-wide">
+          <thead className="bg-[#FAFBFF] text-[#9CA3AF] text-xs uppercase tracking-wide">
             <tr>
               <th className="text-left px-4 py-3">Code</th>
               <th className="text-left px-4 py-3">Discount</th>
@@ -142,32 +142,32 @@ export default function AdminPromoCodes() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-white/50">Loading…</td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-[#9CA3AF]">Loading…</td></tr>
             ) : items.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-white/50">No promo codes yet.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-[#9CA3AF]">No promo codes yet.</td></tr>
             ) : (
               items.map((p) => (
-                <tr key={p.id} className="border-t border-white/5 hover:bg-white/[0.02]">
-                  <td className="px-4 py-3 font-mono">{p.code}</td>
-                  <td className="px-4 py-3">
+                <tr key={p.id} className="border-t border-[#F3F4F6] hover:bg-[#FAFBFF]">
+                  <td className="px-4 py-3 font-mono text-[#5B4FF9]">{p.code}</td>
+                  <td className="px-4 py-3 text-[#111827]">
                     {p.discountType === "percent" ? `${p.discountValue}%` : `Rs ${p.discountValue}`}
                   </td>
-                  <td className="px-4 py-3 text-white/60">
+                  <td className="px-4 py-3 text-[#6B7280]">
                     {p.minOrderAmount ? `Rs ${p.minOrderAmount}` : "—"}
                   </td>
-                  <td className="px-4 py-3 text-right">{p.usageCount}{p.usageLimit ? ` / ${p.usageLimit}` : ""}</td>
+                  <td className="px-4 py-3 text-right text-[#111827]">{p.usageCount}{p.usageLimit ? ` / ${p.usageLimit}` : ""}</td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => toggle(p)}
                       className={`text-xs px-2 py-0.5 rounded-full ${
-                        p.isActive ? "bg-emerald-500/15 text-emerald-300" : "bg-white/5 text-white/50"
+                        p.isActive ? "bg-[#DCFCE7] text-[#15803D]" : "bg-[#F3F4F6] text-[#6B7280]"
                       }`}
                     >
                       {p.isActive ? "Active" : "Paused"}
                     </button>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button onClick={() => remove(p)} className="text-rose-300 hover:text-rose-200 p-1">
+                    <button onClick={() => remove(p)} className="text-[#DC2626] hover:text-[#B91C1C] p-1">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </td>

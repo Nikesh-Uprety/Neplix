@@ -60,8 +60,8 @@ export default function AdminOrders() {
             onClick={() => setFilter(s)}
             className={`px-3 py-1.5 rounded-full text-xs capitalize border ${
               filter === s
-                ? "bg-cyan-500/20 border-cyan-500/40 text-cyan-200"
-                : "bg-white/[0.02] border-white/10 text-white/60 hover:text-white"
+                ? "bg-[#5B4FF9] border-[#5B4FF9] text-white"
+                : "bg-white border-[#E5E7EB] text-[#6B7280] hover:border-[#C4B5FD] hover:text-[#111827]"
             }`}
           >
             {s || "all"}
@@ -69,9 +69,9 @@ export default function AdminOrders() {
         ))}
       </div>
 
-      <div className="rounded-2xl border border-white/5 bg-[#0B1220] overflow-hidden">
+      <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-sm overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-white/[0.03] text-white/60 text-xs uppercase tracking-wide">
+          <thead className="bg-[#FAFBFF] text-[#9CA3AF] text-xs uppercase tracking-wide">
             <tr>
               <th className="text-left px-4 py-3">Order</th>
               <th className="text-left px-4 py-3">Customer</th>
@@ -84,33 +84,33 @@ export default function AdminOrders() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-white/50">
+                <td colSpan={6} className="px-4 py-10 text-center text-[#9CA3AF]">
                   Loading…
                 </td>
               </tr>
             ) : orders.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-white/50">
+                <td colSpan={6} className="px-4 py-10 text-center text-[#9CA3AF]">
                   No orders found.
                 </td>
               </tr>
             ) : (
               orders.map((o) => (
-                <tr key={o.id} className="border-t border-white/5 hover:bg-white/[0.02]">
-                  <td className="px-4 py-3 font-mono text-xs">{o.orderNumber}</td>
+                <tr key={o.id} className="border-t border-[#F3F4F6] hover:bg-[#FAFBFF]">
+                  <td className="px-4 py-3 font-mono text-xs text-[#5B4FF9] font-semibold">{o.orderNumber}</td>
                   <td className="px-4 py-3">
-                    <div className="text-white">{o.customerName}</div>
+                    <div className="text-[#111827] font-medium">{o.customerName}</div>
                     {o.customerEmail && (
-                      <div className="text-xs text-white/40">{o.customerEmail}</div>
+                      <div className="text-xs text-[#9CA3AF]">{o.customerEmail}</div>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right font-medium">
+                  <td className="px-4 py-3 text-right font-medium text-[#111827]">
                     Rs {o.total.toLocaleString()}
                   </td>
                   <td className="px-4 py-3">
                     <span
                       className={`inline-block px-2 py-0.5 rounded-full text-xs capitalize ${
-                        PAY_COLORS[o.paymentStatus] ?? "bg-white/5 text-white/60"
+                        PAY_COLORS[o.paymentStatus]?.replace("/15", "/10") ?? "bg-[#F3F4F6] text-[#6B7280]"
                       }`}
                     >
                       {o.paymentStatus}
@@ -120,18 +120,18 @@ export default function AdminOrders() {
                     <select
                       value={o.status}
                       onChange={(e) => updateStatus(o.id, e.target.value)}
-                      className={`text-xs rounded-full px-2 py-1 capitalize border-0 ${
-                        STATUS_COLORS[o.status] ?? "bg-white/5 text-white/60"
+                      className={`text-xs rounded-full px-2 py-1 capitalize border border-transparent ${
+                        STATUS_COLORS[o.status]?.replace("/15", "/10") ?? "bg-[#F3F4F6] text-[#6B7280]"
                       }`}
                     >
                       {["pending", "processing", "shipped", "delivered", "cancelled", "refunded"].map((s) => (
-                        <option key={s} value={s} className="bg-[#0B1220] text-white">
+                        <option key={s} value={s} className="bg-white text-[#111827]">
                           {s}
                         </option>
                       ))}
                     </select>
                   </td>
-                  <td className="px-4 py-3 text-xs text-white/60">
+                  <td className="px-4 py-3 text-xs text-[#9CA3AF]">
                     {new Date(o.createdAt).toLocaleDateString()}
                   </td>
                 </tr>

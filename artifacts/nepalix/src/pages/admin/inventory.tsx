@@ -38,24 +38,24 @@ export default function AdminInventory() {
   return (
     <AdminLayout title="Inventory" subtitle="Stock levels across your catalog">
       {low.length > 0 && (
-        <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
-          <div className="flex items-center gap-2 text-amber-300 mb-2">
+        <div className="mb-6 rounded-xl border border-[#FDE68A] bg-[#FFFBEB] p-4">
+          <div className="flex items-center gap-2 text-[#B45309] mb-2">
             <AlertTriangle className="h-4 w-4" />
             <span className="text-sm font-medium">{low.length} item{low.length === 1 ? "" : "s"} low on stock</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {low.slice(0, 8).map((i) => (
-              <span key={i.id} className="px-2.5 py-1 rounded-full bg-white/5 text-xs text-white/80">
-                {i.name} <span className="text-amber-300 ml-1">· {i.stock}</span>
+              <span key={i.id} className="px-2.5 py-1 rounded-full bg-white text-xs text-[#374151] border border-[#F3F4F6]">
+                {i.name} <span className="text-[#B45309] ml-1">· {i.stock}</span>
               </span>
             ))}
           </div>
         </div>
       )}
 
-      <div className="rounded-2xl border border-white/5 bg-[#0B1220] overflow-hidden">
+      <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-sm overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-white/[0.03] text-white/60 text-xs uppercase tracking-wide">
+          <thead className="bg-[#FAFBFF] text-[#9CA3AF] text-xs uppercase tracking-wide">
             <tr>
               <th className="text-left px-4 py-3">Product</th>
               <th className="text-left px-4 py-3">SKU</th>
@@ -66,17 +66,17 @@ export default function AdminInventory() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={5} className="px-4 py-10 text-center text-white/50">Loading…</td></tr>
+              <tr><td colSpan={5} className="px-4 py-10 text-center text-[#9CA3AF]">Loading…</td></tr>
             ) : items.length === 0 ? (
-              <tr><td colSpan={5} className="px-4 py-10 text-center text-white/50">No products yet.</td></tr>
+              <tr><td colSpan={5} className="px-4 py-10 text-center text-[#9CA3AF]">No products yet.</td></tr>
             ) : (
               items.map((p) => (
-                <tr key={p.id} className="border-t border-white/5 hover:bg-white/[0.02]">
-                  <td className="px-4 py-3">{p.name}</td>
-                  <td className="px-4 py-3 text-white/60">{p.sku ?? "—"}</td>
-                  <td className="px-4 py-3 text-right">Rs {p.price.toLocaleString()}</td>
+                <tr key={p.id} className="border-t border-[#F3F4F6] hover:bg-[#FAFBFF]">
+                  <td className="px-4 py-3 text-[#111827] font-medium">{p.name}</td>
+                  <td className="px-4 py-3 text-[#6B7280]">{p.sku ?? "—"}</td>
+                  <td className="px-4 py-3 text-right text-[#111827] font-medium">Rs {p.price.toLocaleString()}</td>
                   <td className="px-4 py-3 text-center">
-                    <span className={p.stock < 5 ? "text-rose-300 font-semibold" : p.stock < 10 ? "text-amber-300" : "text-white/80"}>
+                    <span className={p.stock < 5 ? "text-[#DC2626] font-semibold" : p.stock < 10 ? "text-[#D97706]" : "text-[#374151]"}>
                       {p.stock}
                     </span>
                   </td>

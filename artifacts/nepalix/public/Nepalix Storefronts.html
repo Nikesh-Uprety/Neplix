@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Nepalix — Store Templates</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  fontFamily: {
+    sora: ['Sora','sans-serif'],
+    inter: ['Inter','sans-serif'],
+    playfair: ["'Playfair Display'",'serif'],
+    dm: ["'DM Sans'",'sans-serif'],
+    cormorant: ["'Cormorant Garamond'",'serif'],
+  }
+}}}
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:#fff;color:#111}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:8px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.anim-up{animation:fadeUp .6s ease both}
+.anim-in{animation:fadeIn .5s ease both}
+.anim-d1{animation-delay:.1s}
+.anim-d2{animation-delay:.2s}
+.anim-d3{animation-delay:.3s}
+.anim-d4{animation-delay:.4s}
+.anim-d5{animation-delay:.5s}
+.anim-d6{animation-delay:.6s}
+/* Product placeholder */
+.ph{background:#f0f0ee;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.ph::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 40%,rgba(255,255,255,.4) 50%,transparent 60%);background-size:200% 200%;animation:shimmer 3s ease infinite}
+@keyframes shimmer{0%{background-position:200% 200%}100%{background-position:-200% -200%}}
+.ph svg{opacity:.18;width:40%;height:40%}
+/* Hover zoom */
+.img-zoom{overflow:hidden}
+.img-zoom .ph{transition:transform .5s cubic-bezier(.25,.46,.45,.94)}
+.img-zoom:hover .ph{transform:scale(1.04)}
+/* Store switcher */
+.switcher-pill{backdrop-filter:blur(20px);background:rgba(0,0,0,.75)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// ── Placeholder image component ──────────────────────────────────────────
+const Placeholder = ({ aspect='4/5', className='', label, color='#f0f0ee', iconColor='#bbb' }) => (
+  <div className={`ph rounded-sm ${className}`} style={{aspectRatio:aspect, background:color}}>
+    <svg viewBox="0 0 24 24" fill="none" stroke={iconColor} strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+    </svg>
+    {label && <span className="absolute bottom-3 left-3 text-[10px] font-medium tracking-wide uppercase opacity-30">{label}</span>}
+  </div>
+);
+
+// ── Product card ─────────────────────────────────────────────────────────
+const ProductCard = ({ name, price, oldPrice, badge, aspect='4/5', phColor, iconColor, nameFont='font-inter', priceStyle='' }) => (
+  <div className="group cursor-pointer">
+    <div className="img-zoom relative mb-3">
+      <Placeholder aspect={aspect} color={phColor} iconColor={iconColor}/>
+      {badge && <span className="absolute top-2 left-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-black text-white">{badge}</span>}
+    </div>
+    <p className={`text-sm ${nameFont} font-medium text-gray-900 group-hover:underline underline-offset-2 transition-all`}>{name}</p>
+    <div className="flex items-center gap-2 mt-0.5">
+      <span className={`text-sm font-semibold text-gray-900 ${priceStyle}`}>Rs. {price.toLocaleString()}</span>
+      {oldPrice && <span className="text-xs text-gray-400 line-through">Rs. {oldPrice.toLocaleString()}</span>}
+    </div>
+  </div>
+);
+
+// ── SVG Icons ────────────────────────────────────────────────────────────
+const SearchIcon = ({s=18}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>;
+const UserIcon = ({s=18}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+const BagIcon = ({s=18}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>;
+const MenuIcon = ({s=20}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>;
+const ArrowRight = ({s=16}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>;
+const Instagram = ({s=16}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect width="20" height="20" x="2" y="2" rx="5"/><circle cx="12" cy="12" r="5"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>;
+
+// ─────────────────────────────────────────────────────────────────────────
+// STORE 1: NORTH ATELIER — Minimalist Streetwear
+// ─────────────────────────────────────────────────────────────────────────
+const NorthAtelier = () => {
+  const products = [
+    { name:'Winds In The North Hoodie', price:2500, badge:'New' },
+    { name:'North Ascend Parka', price:3500 },
+    { name:'Glacier Down Jacket', price:4200 },
+    { name:'Summit Base Layer', price:1800 },
+  ];
+  const arrivals = [
+    { name:'Mist Alpine Sweater', price:2200 },
+    { name:'North Tundra Tee', price:1200 },
+    { name:'Arctic Overshirt', price:2800 },
+    { name:'Basecamp Jogger', price:1600 },
+  ];
+  return (
+    <div className="font-inter text-gray-900 bg-[#F8F8F7]">
+      {/* Navbar */}
+      <header className="max-w-screen-xl mx-auto px-6 py-5">
+        <div className="flex items-center justify-between border-b border-gray-200 pb-4">
+          <nav className="flex items-center gap-8">
+            <a className="text-[13px] font-medium text-gray-900 border-b border-gray-900 pb-0.5">Store</a>
+            <a className="text-[13px] font-medium text-gray-400 hover:text-gray-900 transition-colors cursor-pointer">Exclusive</a>
+            <a className="text-[13px] font-medium text-gray-400 hover:text-gray-900 transition-colors cursor-pointer">Stories</a>
+          </nav>
+          <a className="text-xl font-bold tracking-[.25em] uppercase text-gray-900 font-sora">North Atelier</a>
+          <div className="flex items-center gap-5">
+            <button className="text-gray-500 hover:text-gray-900 transition-colors"><SearchIcon/></button>
+            <button className="text-gray-500 hover:text-gray-900 transition-colors"><UserIcon/></button>
+            <button className="text-gray-500 hover:text-gray-900 transition-colors relative">
+              <BagIcon/>
+              <span className="absolute -top-1 -right-1.5 w-4 h-4 rounded-full bg-gray-900 text-white text-[9px] font-bold flex items-center justify-center">2</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="max-w-screen-xl mx-auto px-6 mb-16 anim-up">
+        <div className="relative overflow-hidden bg-[#2c3440] aspect-[21/9] flex items-end p-8 sm:p-12">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"/>
+          <Placeholder aspect="21/9" className="absolute inset-0 !rounded-none" color="#2c3440" iconColor="#4a5568" label="Hero Campaign Image"/>
+          <div className="relative z-10">
+            <h1 className="text-4xl sm:text-6xl font-bold text-white leading-[1.05] mb-2 font-playfair italic">
+              NORTH:<br/>The Ascend
+            </h1>
+            <p className="text-sm text-white/60 mb-5 tracking-wide">Made in Mind</p>
+            <button className="px-6 py-2.5 bg-white text-gray-900 text-xs font-bold uppercase tracking-[.15em] hover:bg-gray-100 transition-all">
+              Shop Collection
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Quote */}
+      <section className="max-w-screen-xl mx-auto px-6 text-center mb-16 anim-up anim-d1">
+        <p className="font-playfair italic text-lg sm:text-xl text-gray-600 max-w-xl mx-auto leading-relaxed">
+          "Products are made in a factory but brands are created in the mind."
+        </p>
+        <p className="text-xs text-gray-400 mt-3 tracking-wide">— Walter Landor</p>
+      </section>
+
+      {/* Featured Collection */}
+      <section className="max-w-screen-xl mx-auto px-6 mb-20 anim-up anim-d2">
+        <h2 className="text-xl font-semibold mb-6 tracking-tight">Featured Collection</h2>
+        <div className="grid grid-cols-2 gap-5">
+          {products.slice(0,2).map(p=>(
+            <ProductCard key={p.name} {...p} phColor="#e8e6e2" iconColor="#c5c2bb" nameFont="font-inter"/>
+          ))}
+        </div>
+      </section>
+
+      {/* New Arrivals */}
+      <section className="max-w-screen-xl mx-auto px-6 mb-20 anim-up anim-d3">
+        <h2 className="text-xl font-semibold mb-6 tracking-tight">New Arrivals</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {arrivals.map(p=>(
+            <ProductCard key={p.name} {...p} phColor="#edecea" iconColor="#c5c2bb"/>
+          ))}
+        </div>
+      </section>
+
+      {/* Story block */}
+      <section className="max-w-screen-xl mx-auto px-6 mb-20 anim-up anim-d4">
+        <div className="relative overflow-hidden aspect-[16/7]">
+          <Placeholder aspect="16/7" className="!rounded-none" color="#3a3a3a" iconColor="#555" label="Campaign / Story Image"/>
+          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+            <div className="text-center">
+              <p className="text-2xl sm:text-3xl font-playfair italic text-white mb-3">Explore the journey behind</p>
+              <p className="text-xs text-white/60 tracking-[.2em] uppercase">our North collection</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Newsletter */}
+      <section className="max-w-screen-xl mx-auto px-6 mb-16 text-center anim-up anim-d5">
+        <h3 className="text-lg font-semibold mb-2">Join the North Atelier Community</h3>
+        <p className="text-sm text-gray-500 mb-5 max-w-md mx-auto">Be the first to know about new drops, exclusive offers, and stories from the workshop.</p>
+        <div className="flex max-w-sm mx-auto border border-gray-300">
+          <input type="email" placeholder="Enter your email" className="flex-1 px-4 py-2.5 text-sm bg-transparent outline-none placeholder:text-gray-400"/>
+          <button className="px-5 py-2.5 bg-gray-900 text-white text-[11px] font-bold uppercase tracking-[.15em] hover:bg-gray-800 transition-colors">Subscribe</button>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-[#111] text-white">
+        <div className="max-w-screen-xl mx-auto px-6 py-12">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-10">
+            <div>
+              <p className="text-lg font-bold tracking-[.2em] uppercase font-sora mb-3">North Atelier</p>
+              <p className="text-xs text-gray-400 leading-relaxed">Thamel, Kathmandu<br/>(+977) 98012 34567<br/>hello@northatelier.com</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[.2em] text-gray-400 mb-3">Legals</p>
+              {['Shipping Policy','Refund Policy','Privacy Policy','Terms of Service'].map(l=>(
+                <a key={l} className="block text-sm text-gray-300 hover:text-white transition-colors mb-1.5 cursor-pointer">{l}</a>
+              ))}
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[.2em] text-gray-400 mb-3">Find Us</p>
+              {['Instagram','Facebook','TikTok'].map(l=>(
+                <a key={l} className="block text-sm text-gray-300 hover:text-white transition-colors mb-1.5 cursor-pointer">{l}</a>
+              ))}
+            </div>
+          </div>
+          <div className="border-t border-gray-800 pt-6 text-center text-[11px] text-gray-500">
+            © 2026 North Atelier. All rights reserved. · Powered by <span className="text-gray-400 font-semibold">Nepalix</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────
+// STORE 2: MAISON NOIR — High Fashion / Editorial
+// ─────────────────────────────────────────────────────────────────────────
+const MaisonNoir = () => {
+  const collections = [
+    { name:'Shadow Silk Drape Dress', price:8500 },
+    { name:'Noir Structured Blazer', price:12000 },
+    { name:'Obsidian Leather Clutch', price:6200 },
+    { name:'Velvet Noir Heels', price:7800 },
+  ];
+  const editorial = [
+    { name:'Midnight Wool Coat', price:15000, badge:'Exclusive' },
+    { name:'Carbon Silk Trousers', price:5600 },
+    { name:'Onyx Statement Ring', price:3200 },
+    { name:'Raven Cashmere Scarf', price:4400 },
+  ];
+  return (
+    <div className="font-dm text-gray-900 bg-white">
+      {/* Navbar */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-gray-100">
+        <div className="max-w-screen-xl mx-auto px-6 h-16 flex items-center justify-between">
+          <button className="sm:hidden text-gray-700"><MenuIcon/></button>
+          <nav className="hidden sm:flex items-center gap-8">
+            <a className="text-[13px] font-medium text-gray-900 cursor-pointer">Collection</a>
+            <a className="text-[13px] font-medium text-gray-400 hover:text-gray-900 transition-colors cursor-pointer">Lookbook</a>
+            <a className="text-[13px] font-medium text-gray-400 hover:text-gray-900 transition-colors cursor-pointer">Atelier</a>
+          </nav>
+          <a className="absolute left-1/2 -translate-x-1/2 text-[22px] font-cormorant font-semibold tracking-[.3em] uppercase">Maison Noir</a>
+          <div className="flex items-center gap-5">
+            <button className="text-gray-500 hover:text-gray-900 transition-colors"><SearchIcon/></button>
+            <button className="text-gray-500 hover:text-gray-900 transition-colors hidden sm:block"><UserIcon/></button>
+            <button className="text-gray-500 hover:text-gray-900 transition-colors relative">
+              <BagIcon/>
+              <span className="absolute -top-1 -right-1.5 w-4 h-4 rounded-full bg-black text-white text-[9px] font-bold flex items-center justify-center">1</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="pt-16">
+        {/* Hero — Full bleed editorial */}
+        <section className="anim-in">
+          <div className="grid grid-cols-1 sm:grid-cols-2 min-h-[85vh]">
+            <div className="bg-[#1a1a1a] flex items-center justify-center p-12 sm:p-20 order-2 sm:order-1">
+              <div>
+                <p className="text-xs text-gray-500 tracking-[.3em] uppercase mb-4 anim-up">Spring / Summer 2026</p>
+                <h1 className="text-5xl sm:text-7xl font-cormorant font-light text-white leading-[1.05] mb-6 anim-up anim-d1">
+                  The Art of<br/>
+                  <em className="font-medium">Darkness</em>
+                </h1>
+                <p className="text-sm text-gray-400 mb-8 max-w-xs leading-relaxed anim-up anim-d2">
+                  A study in silhouette. Where shadow meets structure, elegance is born.
+                </p>
+                <button className="px-8 py-3 border border-white/30 text-white text-[11px] font-medium uppercase tracking-[.2em] hover:bg-white hover:text-black transition-all duration-300 anim-up anim-d3">
+                  Discover the Collection
+                </button>
+              </div>
+            </div>
+            <div className="order-1 sm:order-2">
+              <Placeholder aspect="3/4" className="w-full h-full !rounded-none min-h-[50vh] sm:min-h-0" color="#2a2a28" iconColor="#444" label="Editorial Hero"/>
+            </div>
+          </div>
+        </section>
+
+        {/* Collection */}
+        <section className="max-w-screen-xl mx-auto px-6 py-20">
+          <div className="flex items-end justify-between mb-10">
+            <div>
+              <p className="text-xs text-gray-400 tracking-[.25em] uppercase mb-1">Curated</p>
+              <h2 className="text-3xl font-cormorant font-medium">The Collection</h2>
+            </div>
+            <a className="text-xs font-medium text-gray-500 hover:text-gray-900 flex items-center gap-1.5 cursor-pointer transition-colors">
+              View All <ArrowRight/>
+            </a>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+            {collections.map((p,i)=>(
+              <div key={p.name} className={`anim-up anim-d${i+1}`}>
+                <ProductCard {...p} aspect="3/4" phColor="#f5f3f0" iconColor="#d1cdc7" nameFont="font-dm"/>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Lookbook Banner */}
+        <section className="mb-20 anim-up">
+          <div className="max-w-screen-xl mx-auto px-6">
+            <div className="grid grid-cols-1 sm:grid-cols-5 gap-5">
+              <div className="sm:col-span-3 relative overflow-hidden">
+                <Placeholder aspect="4/3" className="!rounded-none" color="#e8e4de" iconColor="#c5c0b8" label="Lookbook Image 1"/>
+              </div>
+              <div className="sm:col-span-2 flex items-center p-8 sm:p-12 bg-[#f7f5f2]">
+                <div>
+                  <p className="text-xs text-gray-400 tracking-[.25em] uppercase mb-3">The Lookbook</p>
+                  <h3 className="text-2xl sm:text-3xl font-cormorant font-medium leading-tight mb-4">
+                    Where restraint<br/>becomes luxury.
+                  </h3>
+                  <button className="text-xs font-medium text-gray-900 border-b border-gray-900 pb-0.5 hover:opacity-60 transition-opacity">
+                    Explore Lookbook →
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Editorial Picks */}
+        <section className="max-w-screen-xl mx-auto px-6 mb-20">
+          <h2 className="text-2xl font-cormorant font-medium mb-8">Editorial Picks</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+            {editorial.map((p,i)=>(
+              <div key={p.name} className={`anim-up anim-d${i+1}`}>
+                <ProductCard {...p} aspect="3/4" phColor="#eae7e3" iconColor="#ccc7c0" nameFont="font-dm"/>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Newsletter */}
+        <section className="bg-[#1a1a1a] py-20 text-center">
+          <p className="text-xs text-gray-500 tracking-[.3em] uppercase mb-3">Stay Connected</p>
+          <h3 className="text-2xl font-cormorant font-medium text-white mb-6">Join the Maison</h3>
+          <div className="flex max-w-md mx-auto border border-gray-700 overflow-hidden">
+            <input type="email" placeholder="your@email.com" className="flex-1 px-5 py-3 bg-transparent text-white text-sm outline-none placeholder:text-gray-600"/>
+            <button className="px-6 py-3 bg-white text-black text-[11px] font-bold uppercase tracking-[.15em] hover:bg-gray-200 transition-colors">Subscribe</button>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="bg-[#0e0e0e] text-white py-14">
+          <div className="max-w-screen-xl mx-auto px-6">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-8 mb-10">
+              <div className="sm:col-span-2">
+                <p className="text-xl font-cormorant font-medium tracking-[.2em] uppercase mb-3">Maison Noir</p>
+                <p className="text-xs text-gray-500 leading-relaxed max-w-xs">Durbar Marg, Kathmandu, Nepal<br/>(+977) 98412 56789 · atelier@maisonnoir.np</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[.2em] text-gray-500 mb-3">Navigation</p>
+                {['Collection','Lookbook','Atelier','About'].map(l=>(
+                  <a key={l} className="block text-sm text-gray-400 hover:text-white transition-colors mb-1.5 cursor-pointer">{l}</a>
+                ))}
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[.2em] text-gray-500 mb-3">Social</p>
+                {['Instagram','Pinterest','Twitter/X'].map(l=>(
+                  <a key={l} className="block text-sm text-gray-400 hover:text-white transition-colors mb-1.5 cursor-pointer">{l}</a>
+                ))}
+              </div>
+            </div>
+            <div className="border-t border-gray-800 pt-6 text-center text-[11px] text-gray-600">
+              © 2026 Maison Noir. · Powered by <span className="text-gray-500 font-semibold">Nepalix</span>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────
+// STORE 3: HIMALAYAN BREW — Coffee & Bakery
+// ─────────────────────────────────────────────────────────────────────────
+const HimalayanBrew = () => {
+  const featured = [
+    { name:'Single Origin Himalayan Dark', price:750, badge:'Bestseller' },
+    { name:'Sunrise Espresso Blend', price:650 },
+    { name:'Cloud Nine Filter Roast', price:600 },
+    { name:'Sherpa Cold Brew Concentrate', price:900 },
+  ];
+  const bakery = [
+    { name:'Sourdough Artisan Loaf', price:320 },
+    { name:'Almond Croissant', price:220 },
+    { name:'Dark Chocolate Brownie', price:180 },
+    { name:'Cinnamon Cardamom Roll', price:250, badge:'New' },
+  ];
+  const warmBg = '#FBF8F3';
+  const warmPh = '#EDE8DF';
+  const warmIc = '#C9C1B4';
+  return (
+    <div className="font-dm bg-[#FBF8F3] text-[#2C2218]">
+      {/* Navbar */}
+      <header className="max-w-screen-xl mx-auto px-6 py-5">
+        <div className="flex items-center justify-between">
+          <nav className="hidden sm:flex items-center gap-7">
+            <a className="text-[13px] font-medium text-[#2C2218] cursor-pointer">Menu</a>
+            <a className="text-[13px] font-medium text-[#9C8C7A] hover:text-[#2C2218] transition-colors cursor-pointer">Our Story</a>
+            <a className="text-[13px] font-medium text-[#9C8C7A] hover:text-[#2C2218] transition-colors cursor-pointer">Locations</a>
+          </nav>
+          <button className="sm:hidden text-[#2C2218]"><MenuIcon/></button>
+          <div className="text-center">
+            <p className="text-xl font-bold tracking-[.15em] uppercase font-sora text-[#2C2218]">Himalayan Brew</p>
+          </div>
+          <div className="flex items-center gap-5">
+            <button className="text-[#9C8C7A] hover:text-[#2C2218] transition-colors"><SearchIcon/></button>
+            <button className="text-[#9C8C7A] hover:text-[#2C2218] transition-colors hidden sm:block"><UserIcon/></button>
+            <button className="text-[#9C8C7A] hover:text-[#2C2218] transition-colors relative">
+              <BagIcon/>
+              <span className="absolute -top-1 -right-1.5 w-4 h-4 rounded-full bg-[#8B5E3C] text-white text-[9px] font-bold flex items-center justify-center">3</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero — Warm, inviting */}
+      <section className="max-w-screen-xl mx-auto px-6 mb-16 anim-up">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
+          <div className="py-8 sm:py-16">
+            <p className="text-xs text-[#9C8C7A] tracking-[.3em] uppercase mb-3">Est. 2024 · Kathmandu</p>
+            <h1 className="text-4xl sm:text-6xl font-playfair font-medium text-[#2C2218] leading-[1.08] mb-5">
+              Craft Coffee,<br/>
+              <em>Baked Fresh</em><br/>
+              Daily.
+            </h1>
+            <p className="text-sm text-[#7A6E60] mb-6 max-w-sm leading-relaxed">
+              From the highlands of Nepal to your cup. Ethically sourced beans, artisan bakes, and warmth in every sip.
+            </p>
+            <div className="flex gap-3">
+              <button className="px-7 py-3 bg-[#8B5E3C] text-white text-[11px] font-bold uppercase tracking-[.15em] hover:bg-[#7A5035] transition-all rounded-full">
+                Order Now
+              </button>
+              <button className="px-7 py-3 border border-[#C9BDA8] text-[#2C2218] text-[11px] font-bold uppercase tracking-[.15em] hover:bg-[#EDE8DF] transition-all rounded-full">
+                Our Menu
+              </button>
+            </div>
+          </div>
+          <div className="relative">
+            <Placeholder aspect="4/5" color={warmPh} iconColor={warmIc} className="rounded-2xl" label="Hero — Coffee / Interior"/>
+            {/* Floating badge */}
+            <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-sm rounded-xl px-4 py-3 shadow-lg">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#8B5E3C] mb-0.5">★ 4.9 Rating</p>
+              <p className="text-xs text-[#7A6E60]">1,200+ happy customers</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features row */}
+      <section className="max-w-screen-xl mx-auto px-6 mb-16 anim-up anim-d1">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[
+            {icon:'☕',title:'Single Origin',desc:'Ethically sourced from Nepal highlands'},
+            {icon:'🍞',title:'Baked Fresh',desc:'Every morning at 5 AM, no exceptions'},
+            {icon:'🌿',title:'100% Organic',desc:'No chemicals, ever'},
+            {icon:'🚀',title:'Same-Day Delivery',desc:'Kathmandu Valley wide'},
+          ].map(f=>(
+            <div key={f.title} className="bg-white rounded-xl p-5 text-center border border-[#EDE8DF]">
+              <p className="text-2xl mb-2">{f.icon}</p>
+              <p className="text-sm font-semibold text-[#2C2218]">{f.title}</p>
+              <p className="text-[11px] text-[#9C8C7A] mt-0.5">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Featured Coffee */}
+      <section className="max-w-screen-xl mx-auto px-6 mb-20 anim-up anim-d2">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <p className="text-xs text-[#9C8C7A] tracking-[.2em] uppercase mb-1">Our Beans</p>
+            <h2 className="text-2xl font-playfair font-medium">Featured Coffee</h2>
+          </div>
+          <a className="text-xs font-medium text-[#8B5E3C] hover:underline cursor-pointer flex items-center gap-1">View All <ArrowRight/></a>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+          {featured.map(p=>(
+            <ProductCard key={p.name} {...p} aspect="1/1" phColor={warmPh} iconColor={warmIc} nameFont="font-dm" priceStyle="text-[#8B5E3C]"/>
+          ))}
+        </div>
+      </section>
+
+      {/* Story banner */}
+      <section className="max-w-screen-xl mx-auto px-6 mb-20 anim-up anim-d3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center bg-[#2C2218] rounded-2xl overflow-hidden">
+          <Placeholder aspect="4/3" className="!rounded-none" color="#3D3026" iconColor="#5C4E40" label="Coffee Origin Story"/>
+          <div className="p-8 sm:p-12">
+            <p className="text-xs text-[#9C8C7A] tracking-[.25em] uppercase mb-3">Our Story</p>
+            <h3 className="text-2xl sm:text-3xl font-playfair font-medium text-white leading-tight mb-4">
+              From Himalayan<br/>soil to your cup
+            </h3>
+            <p className="text-sm text-[#9C8C7A] mb-6 leading-relaxed">We partner directly with farmers in the Solukhumbu region, ensuring fair wages and sustainable practices from bean to brew.</p>
+            <button className="px-6 py-2.5 border border-[#9C8C7A]/40 text-white text-[11px] font-medium uppercase tracking-[.15em] hover:bg-white/10 transition-all rounded-full">
+              Read Our Story
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Bakery */}
+      <section className="max-w-screen-xl mx-auto px-6 mb-20 anim-up anim-d4">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <p className="text-xs text-[#9C8C7A] tracking-[.2em] uppercase mb-1">From the Oven</p>
+            <h2 className="text-2xl font-playfair font-medium">Bakery Favorites</h2>
+          </div>
+          <a className="text-xs font-medium text-[#8B5E3C] hover:underline cursor-pointer flex items-center gap-1">View All <ArrowRight/></a>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+          {bakery.map(p=>(
+            <ProductCard key={p.name} {...p} aspect="1/1" phColor={warmPh} iconColor={warmIc} nameFont="font-dm" priceStyle="text-[#8B5E3C]"/>
+          ))}
+        </div>
+      </section>
+
+      {/* Newsletter */}
+      <section className="max-w-screen-xl mx-auto px-6 mb-16 text-center anim-up anim-d5">
+        <div className="bg-white rounded-2xl border border-[#EDE8DF] p-10 max-w-lg mx-auto">
+          <p className="text-2xl mb-1">☕</p>
+          <h3 className="text-xl font-playfair font-medium mb-2">Get 10% Off Your First Order</h3>
+          <p className="text-xs text-[#9C8C7A] mb-5">Plus early access to seasonal blends and fresh bakery drops.</p>
+          <div className="flex border border-[#D4C9BB] rounded-full overflow-hidden">
+            <input type="email" placeholder="Enter your email" className="flex-1 px-5 py-2.5 text-sm bg-transparent outline-none placeholder:text-[#C9BDA8]"/>
+            <button className="px-5 py-2.5 bg-[#8B5E3C] text-white text-[11px] font-bold uppercase tracking-[.1em] rounded-r-full hover:bg-[#7A5035] transition-colors">Subscribe</button>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-[#2C2218] text-white">
+        <div className="max-w-screen-xl mx-auto px-6 py-12">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-8 mb-10">
+            <div className="sm:col-span-2">
+              <p className="text-lg font-bold tracking-[.15em] uppercase font-sora mb-3">Himalayan Brew</p>
+              <p className="text-xs text-[#9C8C7A] leading-relaxed max-w-xs">
+                Jhamsikhel, Lalitpur, Nepal<br/>(+977) 98156 78901<br/>hello@himalayanbrew.np
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#9C8C7A] mb-3">Explore</p>
+              {['Menu','Coffee Beans','Bakery','Gift Cards'].map(l=>(
+                <a key={l} className="block text-sm text-[#C9BDA8] hover:text-white transition-colors mb-1.5 cursor-pointer">{l}</a>
+              ))}
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#9C8C7A] mb-3">Visit Us</p>
+              <p className="text-sm text-[#C9BDA8] mb-1.5">Mon–Sat: 7 AM – 8 PM</p>
+              <p className="text-sm text-[#C9BDA8] mb-3">Sun: 8 AM – 6 PM</p>
+              {['Instagram','Facebook'].map(l=>(
+                <a key={l} className="block text-sm text-[#C9BDA8] hover:text-white transition-colors mb-1.5 cursor-pointer">{l}</a>
+              ))}
+            </div>
+          </div>
+          <div className="border-t border-[#3D3026] pt-6 text-center text-[11px] text-[#7A6E60]">
+            © 2026 Himalayan Brew. · Powered by <span className="text-[#9C8C7A] font-semibold">Nepalix</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────
+// STORE SWITCHER & APP
+// ─────────────────────────────────────────────────────────────────────────
+const STORES = [
+  { id:'north',   label:'North Atelier',    desc:'Streetwear & Outerwear', component: NorthAtelier, color:'#111' },
+  { id:'maison',  label:'Maison Noir',      desc:'High Fashion',          component: MaisonNoir,   color:'#1a1a1a' },
+  { id:'brew',    label:'Himalayan Brew',    desc:'Coffee & Bakery',       component: HimalayanBrew,color:'#8B5E3C' },
+];
+
+const App = () => {
+  const [active, setActive] = useState(()=>localStorage.getItem('np-store')||'north');
+  const [switcher, setSwitcher] = useState(false);
+
+  useEffect(()=>{
+    localStorage.setItem('np-store', active);
+    window.scrollTo(0,0);
+  }, [active]);
+
+  // Tweaks protocol
+  useEffect(()=>{
+    const handler = (e) => {
+      if (e.data?.type==='__activate_edit_mode') setSwitcher(true);
+      if (e.data?.type==='__deactivate_edit_mode') setSwitcher(false);
+    };
+    window.addEventListener('message', handler);
+    window.parent.postMessage({type:'__edit_mode_available'}, '*');
+    return ()=>window.removeEventListener('message', handler);
+  }, []);
+
+  const Store = STORES.find(s=>s.id===active)?.component || NorthAtelier;
+
+  return (
+    <>
+      {/* Floating store switcher — always visible */}
+      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[999] flex items-center gap-1.5 switcher-pill rounded-full px-1.5 py-1.5 shadow-2xl border border-white/10">
+        {STORES.map(s=>(
+          <button key={s.id} onClick={()=>setActive(s.id)}
+            className={`px-4 py-2 rounded-full text-[11px] font-bold tracking-wide transition-all whitespace-nowrap ${active===s.id?'bg-white text-gray-900 shadow-md':'text-white/70 hover:text-white hover:bg-white/10'}`}>
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Nepalix badge */}
+      <div className="fixed top-4 right-4 z-[999] flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-lg border border-gray-200/50">
+        <div className="w-5 h-5 rounded-md bg-[#5B4FF9] flex items-center justify-center">
+          <span className="text-white text-[8px] font-black font-sora">N</span>
+        </div>
+        <span className="text-[10px] font-bold text-gray-500 tracking-wide">NEPALIX STORE</span>
+      </div>
+
+      <div key={active} className="anim-in">
+        <Store/>
+      </div>
+
+      {/* Tweaks panel (optional overlay) */}
+      {switcher && (
+        <div className="fixed bottom-20 right-5 z-[1000] bg-white rounded-2xl shadow-2xl border border-gray-200 p-5 w-56">
+          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Tweaks</p>
+          <p className="text-[11px] font-semibold text-gray-700 mb-2">Active Store</p>
+          {STORES.map(s=>(
+            <button key={s.id} onClick={()=>setActive(s.id)}
+              className={`w-full text-left px-3 py-2 rounded-lg mb-1 text-xs font-medium transition-all ${active===s.id?'bg-[#5B4FF9] text-white':'text-gray-600 hover:bg-gray-100'}`}>
+              {s.label}
+              <span className="text-[10px] opacity-60 block">{s.desc}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

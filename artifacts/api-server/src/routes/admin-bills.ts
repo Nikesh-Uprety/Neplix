@@ -1,13 +1,18 @@
 import { Router, type IRouter, type Response } from "express";
 import { db, paymentsTable, usersTable, plansTable } from "@workspace/db";
-import { desc, eq, sql } from "drizzle-orm";
-import { authMiddleware, type AuthRequest } from "../middlewares/auth.js";
+import { and, desc, eq, sql } from "drizzle-orm";
+import { authMiddleware } from "../middlewares/auth.js";
 import { requireAdminPage } from "../middlewares/admin.js";
+import {
+  resolveTenantContext,
+  type TenantRequest,
+} from "../middlewares/tenant.js";
 
 const router: IRouter = Router();
-router.use(authMiddleware, requireAdminPage("bills"));
+router.use(authMiddleware, resolveTenantContext, requireAdminPage("bills"));
 
-router.get("/", async (_req: AuthRequest, res: Response) => {
+router.get("/", async (req: TenantRequest, res: Response) => {
+  const storeId = req.tenant!.storeId;
   const rows = await db
     .select({
       id: paymentsTable.id,
@@ -26,6 +31,7 @@ router.get("/", async (_req: AuthRequest, res: Response) => {
     .from(paymentsTable)
     .leftJoin(usersTable, eq(paymentsTable.userId, usersTable.id))
     .leftJoin(plansTable, eq(paymentsTable.planId, plansTable.id))
+    .where(eq(usersTable.storeId, storeId))
     .orderBy(desc(paymentsTable.createdAt))
     .limit(200);
 
@@ -36,7 +42,9 @@ router.get("/", async (_req: AuthRequest, res: Response) => {
       verified: sql<number>`COUNT(*) FILTER (WHERE ${paymentsTable.status}='verified')::int`,
       failed: sql<number>`COUNT(*) FILTER (WHERE ${paymentsTable.status}='failed')::int`,
     })
-    .from(paymentsTable);
+    .from(paymentsTable)
+    .leftJoin(usersTable, eq(paymentsTable.userId, usersTable.id))
+    .where(and(eq(usersTable.storeId, storeId)));
 
   res.json({ bills: rows, summary: agg });
 });
