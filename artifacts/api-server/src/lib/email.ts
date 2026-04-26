@@ -14,6 +14,10 @@ function requiredEnv(name: string): string {
   return value;
 }
 
+function isEmailConfigured(): boolean {
+  return !!process.env.SMTP_HOST?.trim() && !!process.env.SMTP_USER?.trim();
+}
+
 function createTransport() {
   const host = requiredEnv("SMTP_HOST");
   const port = Number(process.env.SMTP_PORT ?? "587");
@@ -46,6 +50,10 @@ export async function sendVerificationCodeEmail(input: {
   firstName: string;
   code: string;
 }) {
+  if (!isEmailConfigured()) {
+    console.log(`[EMAIL SKIPPED] Verification code for ${input.to}: ${input.code}`);
+    return;
+  }
   const transport = createTransport();
   const from = fromAddress();
   const subject = "Your Nepalix verification code";
