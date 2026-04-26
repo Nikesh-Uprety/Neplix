@@ -14,7 +14,7 @@ function requiredEnv(name: string): string {
   return value;
 }
 
-function isEmailConfigured(): boolean {
+export function isEmailConfigured(): boolean {
   return !!process.env.SMTP_HOST?.trim() && !!process.env.SMTP_USER?.trim();
 }
 

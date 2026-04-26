@@ -42,7 +42,7 @@ import { authMiddleware, type AuthRequest } from "../middlewares/auth.js";
 import { createTrialSubscription } from "./subscriptions.js";
 import { logger } from "../lib/logger.js";
 import { provisionStoreForUser } from "../lib/tenant.js";
-import { sendVerificationCodeEmail } from "../lib/email.js";
+import { sendVerificationCodeEmail, isEmailConfigured } from "../lib/email.js";
 
 const router: IRouter = Router();
 
@@ -116,7 +116,7 @@ function setSessionCookie(res: Response, token: string) {
   });
 }
 
-function toAuthResponse(user: User, session?: typeof sessionsTable.$inferSelect) {
+function toAuthUserResponseWithSession(user: User, session?: typeof sessionsTable.$inferSelect) {
   const base = toAuthUserResponse(user);
   if (!session?.impersonatorUserId || !session.impersonatedStoreId || !session.impersonationExpiresAt) {
     return { ...base, impersonation: null };
@@ -168,6 +168,52 @@ router.post("/register", async (req: Request, res: Response) => {
       await db.delete(emailVerificationCodesTable).where(eq(emailVerificationCodesTable.email, normalizedEmail));
       logger.error({ err, email: normalizedEmail }, "Failed to send registration verification email");
       res.status(502).json({ error: "Could not send verification email. Please try again." });
+      return;
+    }
+
+    if (!isEmailConfigured?.()) {
+      const [verification] = await db
+        .select()
+        .from(emailVerificationCodesTable)
+        .where(eq(emailVerificationCodesTable.email, normalizedEmail))
+        .limit(1);
+
+      logger.info({ email: normalizedEmail }, "Email not configured - auto-creating verified user");
+      const [user] = await db
+        .insert(usersTable)
+        .values({
+          email: normalizedEmail,
+          passwordHash,
+          firstName,
+          lastName,
+          role: "user",
+        })
+        .returning();
+
+      if (verification) {
+        await db
+          .update(emailVerificationCodesTable)
+          .set({ consumedAt: new Date() })
+          .where(eq(emailVerificationCodesTable.id, verification.id));
+      }
+
+      try {
+        await createTrialSubscription(user.id);
+        await provisionStoreForUser({
+          userId: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+        });
+      } catch (err) {
+        logger.warn({ err, userId: user.id }, "Failed to bootstrap tenant resources for verified new user");
+      }
+
+      const token = randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + COOKIE_MAX_AGE);
+      await db.insert(sessionsTable).values({ userId: user.id, token, expiresAt });
+      setSessionCookie(res, token);
+      res.status(201).json({ user: toAuthUserResponse(user) });
       return;
     }
 
@@ -340,7 +386,7 @@ router.post("/register/verify", async (req: Request, res: Response) => {
   });
 
   setSessionCookie(res, token);
-  res.status(201).json({ user: toAuthResponse(user) });
+  res.status(201).json({ user: toAuthUserResponse(user) });
 });
 
 const onboardingSchema = z.object({
@@ -542,7 +588,7 @@ router.post("/onboarding/complete", authMiddleware, async (req: AuthRequest, res
     .returning();
 
   res.json({
-    user: toAuthResponse(updatedUser, req.session),
+    user: toAuthUserResponse(updatedUser, req.session),
     store: { id: store.id, slug: store.slug, name: store.name },
     page: { id: page.id, slug: page.slug, isPublished: page.isPublished },
     generatedProductId: product.id,
@@ -587,7 +633,7 @@ router.post("/login", async (req: Request, res: Response) => {
 
     setSessionCookie(res, token);
 
-    res.json({ user: toAuthResponse(user) });
+    res.json({ user: toAuthUserResponse(user) });
   } catch (err) {
     throw err;
   }
@@ -622,7 +668,7 @@ router.post("/logout", authMiddleware, async (req: AuthRequest, res: Response) =
 
 router.get("/me", authMiddleware, (req: AuthRequest, res: Response) => {
   const user = req.user!;
-  res.json({ user: toAuthResponse(user, req.session) });
+  res.json({ user: toAuthUserResponse(user, req.session) });
 });
 
 router.get("/stores", authMiddleware, async (req: AuthRequest, res: Response) => {
@@ -691,7 +737,7 @@ router.post("/active-store", authMiddleware, async (req: AuthRequest, res: Respo
     .where(eq(usersTable.id, req.user!.id))
     .returning();
 
-  res.json({ user: toAuthResponse(user, req.session) });
+  res.json({ user: toAuthUserResponse(user, req.session) });
 });
 
 router.post("/impersonation/start", authMiddleware, async (req: AuthRequest, res: Response) => {
@@ -788,7 +834,7 @@ router.post("/impersonation/start", authMiddleware, async (req: AuthRequest, res
     maxAge: IMPERSONATION_MAX_AGE,
     path: "/",
   });
-  res.json({ user: toAuthResponse(targetUser, session) });
+  res.json({ user: toAuthUserResponse(targetUser, session) });
 });
 
 router.post("/impersonation/stop", authMiddleware, async (req: AuthRequest, res: Response) => {
@@ -850,7 +896,7 @@ router.post("/impersonation/stop", authMiddleware, async (req: AuthRequest, res:
     res.status(404).json({ error: "Impersonator user not found" });
     return;
   }
-  res.json({ user: toAuthResponse(actorUser, originalSession) });
+  res.json({ user: toAuthUserResponse(actorUser, originalSession) });
 });
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
