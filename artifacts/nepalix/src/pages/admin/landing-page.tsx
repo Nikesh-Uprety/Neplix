@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 import { ArrowRight, Coffee, Croissant, Shirt, Sparkles } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Input } from "@/components/ui/input";
@@ -34,15 +35,21 @@ const TEMPLATE_PREVIEWS = [
 ];
 
 export default function AdminLandingPage() {
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [pages, setPages] = useState<AdminStorefrontPage[]>([]);
+  const [templates, setTemplates] = useState<Array<{ id: string; name: string; pageTitle: string }>>([]);
   const [slug, setSlug] = useState("home");
   const [title, setTitle] = useState("Home");
 
   const load = async () => {
     try {
-      const data = await api.admin.landing.listPages();
+      const [data, templateData] = await Promise.all([
+        api.admin.landing.listPages(),
+        api.admin.landing.listTemplates(),
+      ]);
       setPages(data.pages);
+      setTemplates(templateData.templates);
     } catch (e) {
       toast({ title: "Failed to load pages", description: (e as Error).message, variant: "destructive" });
     }
@@ -129,6 +136,37 @@ export default function AdminLandingPage() {
               <ArrowRight className="h-4 w-4" />
             </div>
           </div>
+          <div className="mt-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9CA3AF] mb-2">
+              Quick Apply Template
+            </p>
+            <div className="grid gap-2">
+              {templates.map((template) => (
+                <Button
+                  key={template.id}
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      await api.admin.landing.applyTemplate({
+                        templateId: template.id,
+                        slug: "home",
+                      });
+                      await load();
+                      toast({ title: "Template applied", description: `${template.name} is ready in draft.` });
+                    } catch (e) {
+                      toast({
+                        title: "Template apply failed",
+                        description: (e as Error).message,
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
+                  Use {template.name}
+                </Button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -161,16 +199,21 @@ export default function AdminLandingPage() {
               <p className="text-sm font-medium text-[#111827]">{page.title}</p>
               <p className="text-xs text-[#9CA3AF]">/{page.slug}</p>
             </div>
-            <Button
-              size="sm"
-              variant={page.isPublished ? "secondary" : "outline"}
-              onClick={async () => {
-                await api.admin.landing.updatePage(page.id, { isPublished: !page.isPublished });
-                await load();
-              }}
-            >
-              {page.isPublished ? "Published" : "Publish"}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => setLocation(`/admin/page-editor/${page.id}`)}>
+                Edit
+              </Button>
+              <Button
+                size="sm"
+                variant={page.isPublished ? "secondary" : "outline"}
+                onClick={async () => {
+                  await api.admin.landing.updatePage(page.id, { isPublished: !page.isPublished });
+                  await load();
+                }}
+              >
+                {page.isPublished ? "Published" : "Publish"}
+              </Button>
+            </div>
           </div>
         ))}
       </div>

@@ -1,12 +1,33 @@
-import { Router, type IRouter, type Response } from "express";
+import { Router, type IRouter, type Request, type Response } from "express";
 import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, mediaAssetsTable, mediaBucketsTable } from "@workspace/db";
 import { authMiddleware } from "../middlewares/auth.js";
 import { requireAdminPage } from "../middlewares/admin.js";
 import { resolveTenantContext, type TenantRequest } from "../middlewares/tenant.js";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { uploadMediaAsset } from "../lib/media-upload.js";
 
 const router: IRouter = Router();
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const uploadsRoot = resolve(__dirname, "../../uploads");
+
+router.get("/files/:storeId/:fileName", async (req: Request, res: Response) => {
+  const storeId = String(req.params.storeId ?? "");
+  const fileName = String(req.params.fileName ?? "").replace(/[^a-zA-Z0-9._-]/g, "");
+  if (!storeId || !fileName) {
+    res.status(400).json({ error: "Invalid file path" });
+    return;
+  }
+  const filePath = join(uploadsRoot, storeId, fileName);
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      res.status(404).json({ error: "File not found" });
+    }
+  });
+});
+
 router.use(authMiddleware, resolveTenantContext);
 
 router.get("/images", requireAdminPage("images"), async (req: TenantRequest, res: Response) => {
@@ -17,6 +38,45 @@ router.get("/images", requireAdminPage("images"), async (req: TenantRequest, res
     .orderBy(desc(mediaAssetsTable.createdAt))
     .limit(300);
   res.json({ assets: rows });
+});
+
+const uploadSchema = z.object({
+  fileName: z.string().min(1),
+  contentType: z.string().min(1),
+  dataBase64: z.string().min(1),
+  title: z.string().optional(),
+  bucketId: z.string().uuid().optional(),
+  isStorefront: z.boolean().default(true),
+});
+
+router.post("/upload", requireAdminPage("images"), async (req: TenantRequest, res: Response) => {
+  const parsed = uploadSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid body", details: parsed.error.flatten() });
+    return;
+  }
+  const storeId = req.tenant!.storeId;
+  const uploaded = await uploadMediaAsset({
+    storeId,
+    fileName: parsed.data.fileName,
+    contentType: parsed.data.contentType,
+    dataBase64: parsed.data.dataBase64,
+  });
+  const fileUrl = uploaded.url;
+
+  const [asset] = await db
+    .insert(mediaAssetsTable)
+    .values({
+      storeId,
+      title: parsed.data.title ?? parsed.data.fileName,
+      url: fileUrl,
+      mimeType: parsed.data.contentType,
+      bucketId: parsed.data.bucketId,
+      isStorefront: parsed.data.isStorefront,
+    })
+    .returning();
+
+  res.status(201).json({ asset, url: fileUrl });
 });
 
 const createAssetSchema = z.object({

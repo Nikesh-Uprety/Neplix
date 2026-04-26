@@ -13,6 +13,7 @@ export const usersTable = pgTable("users", {
   activeStoreId: uuid("active_store_id"),
   adminPageAccess: text("admin_page_access").array(),
   googleId: text("google_id"),
+  onboardingCompletedAt: timestamp("onboarding_completed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -39,6 +40,7 @@ export type InsertUser = {
   activeStoreId?: string;
   adminPageAccess?: string[];
   googleId?: string;
+  onboardingCompletedAt?: Date;
 };
 
 export type User = typeof usersTable.$inferSelect;

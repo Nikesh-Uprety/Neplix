@@ -5,7 +5,7 @@ import { db, pool, plansTable, type PlanFeatures, type PlanSlug } from "@workspa
 // artifacts/api-server/src/lib/featureMatrix.ts
 // Do not cross-import from api-server to avoid coupling scripts to its build.
 const FEATURE_MATRIX: Record<PlanSlug, PlanFeatures> = {
-  trial: {
+  free: {
     ordersPerYear: 100,
     products: 20,
     staff: 1,
@@ -35,7 +35,7 @@ const FEATURE_MATRIX: Record<PlanSlug, PlanFeatures> = {
     customIntegrations: false,
     dedicatedManager: false,
   },
-  growth: {
+  business: {
     ordersPerYear: 20000,
     products: 1000,
     staff: 8,
@@ -50,22 +50,7 @@ const FEATURE_MATRIX: Record<PlanSlug, PlanFeatures> = {
     customIntegrations: false,
     dedicatedManager: false,
   },
-  pro: {
-    ordersPerYear: 50000,
-    products: 2500,
-    staff: 25,
-    locations: 10,
-    pos: true,
-    advancedInventory: true,
-    abandonedCart: true,
-    funnelBuilder: true,
-    upsellCrossSell: true,
-    analyticsLevel: "advanced",
-    prioritySupport: true,
-    customIntegrations: false,
-    dedicatedManager: false,
-  },
-  elite: {
+  enterprise: {
     ordersPerYear: null,
     products: null,
     staff: 50,
@@ -94,8 +79,8 @@ type PlanSeed = {
 
 const PLAN_SEEDS: PlanSeed[] = [
   {
-    slug: "trial",
-    name: "Trial",
+    slug: "free",
+    name: "Free",
     tagline: "14-day free trial",
     yearlyPrice: 0,
     monthlyPrice: null,
@@ -112,8 +97,8 @@ const PLAN_SEEDS: PlanSeed[] = [
     displayOrder: 1,
   },
   {
-    slug: "growth",
-    name: "Growth",
+    slug: "business",
+    name: "Business",
     tagline: "For growing stores",
     yearlyPrice: 29999,
     monthlyPrice: 2999,
@@ -121,22 +106,13 @@ const PLAN_SEEDS: PlanSeed[] = [
     displayOrder: 2,
   },
   {
-    slug: "pro",
-    name: "Pro",
-    tagline: "For serious operators",
-    yearlyPrice: 79999,
-    monthlyPrice: 7999,
-    trialDays: 0,
-    displayOrder: 3,
-  },
-  {
-    slug: "elite",
-    name: "Elite",
+    slug: "enterprise",
+    name: "Enterprise",
     tagline: "Enterprise-grade",
     yearlyPrice: 199999,
     monthlyPrice: 19999,
     trialDays: 0,
-    displayOrder: 4,
+    displayOrder: 3,
   },
 ];
 

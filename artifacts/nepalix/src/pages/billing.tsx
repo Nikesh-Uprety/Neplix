@@ -240,7 +240,7 @@ export default function Billing() {
 
   const subscription = subscriptionQuery.data?.subscription ?? null;
   const plans = (plansQuery.data?.plans ?? [])
-    .filter((p) => p.slug !== "trial" && p.isActive)
+    .filter((p) => p.slug !== "free" && p.isActive)
     .sort((a, b) => a.displayOrder - b.displayOrder);
   const payments = paymentsQuery.data?.payments ?? [];
 

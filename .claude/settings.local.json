@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import sys,json; p=json.load\\(sys.stdin\\); print\\(p.get\\('scripts',{}\\)\\)\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(pnpm --filter @workspace/db run build)",
+      "Bash(pnpm --filter @workspace/api-server run typecheck)",
+      "Bash(node --input-type=module --eval \"import '/home/nikesh/Nepalixx/artifacts/nepalix/src/lib/api.ts'\")",
+      "Bash(pnpm --filter @workspace/nepalix run typecheck)",
+      "Bash(git push *)"
+    ]
+  }
+}

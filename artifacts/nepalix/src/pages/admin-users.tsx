@@ -12,6 +12,7 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  UserCheck,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { api, type AdminUser } from "@/lib/api";
@@ -81,7 +82,7 @@ function roleBadgeClass(role: string): string {
 }
 
 export default function AdminUsers() {
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user, isLoading, isAuthenticated, startImpersonation } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -122,6 +123,24 @@ export default function AdminUsers() {
   const total = usersQuery.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_LIMIT));
   const users = usersQuery.data?.users ?? [];
+  const impersonationMutation = useMutation({
+    mutationFn: ({ userId, storeId }: { userId: string; storeId?: string }) =>
+      startImpersonation(userId, storeId),
+    onSuccess: () => {
+      toast({
+        title: "Impersonation started",
+        description: "You are now in the selected store admin context.",
+      });
+      setLocation("/admin/dashboard");
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "Unable to impersonate user",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   if (isLoading) {
     return (
@@ -292,13 +311,32 @@ export default function AdminUsers() {
                         {formatDate(u.createdAt)}
                       </td>
                       <td className="py-3 px-4">
-                        <button
-                          onClick={() => setEditing(u)}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-white/10 text-gray-300 hover:text-white hover:border-cyan-400/40 hover:bg-cyan-400/5 transition-all text-xs"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                          Edit
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setEditing(u)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-white/10 text-gray-300 hover:text-white hover:border-cyan-400/40 hover:bg-cyan-400/5 transition-all text-xs"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                            Edit
+                          </button>
+                          {isActorSuperadmin &&
+                          (u.role?.toLowerCase() === "owner" ||
+                            u.role?.toLowerCase() === "admin") ? (
+                            <button
+                              onClick={() =>
+                                impersonationMutation.mutate({
+                                  userId: u.id,
+                                  storeId: u.storeId ?? undefined,
+                                })
+                              }
+                              disabled={impersonationMutation.isPending}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-amber-400/30 text-amber-300 hover:text-amber-200 hover:bg-amber-400/10 transition-all text-xs disabled:opacity-50"
+                            >
+                              <UserCheck className="w-3.5 h-3.5" />
+                              Impersonate
+                            </button>
+                          ) : null}
+                        </div>
                       </td>
                     </tr>
                   );

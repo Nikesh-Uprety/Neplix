@@ -68,6 +68,13 @@ export type AuthUser = {
   adminPageAccess: string[] | null;
   canAccessAdmin: boolean;
   allowedAdminPages: string[];
+  onboardingCompletedAt: string | null;
+  impersonation: {
+    active: boolean;
+    impersonatorUserId: string;
+    storeId: string;
+    expiresAt: string;
+  } | null;
   createdAt: string;
 };
 
@@ -80,11 +87,29 @@ export type AuthStore = {
   isActive: boolean;
 };
 
+export type RegisterStartResult = {
+  requiresVerification: boolean;
+  email: string;
+  expiresInSeconds: number;
+};
+
+export type CompleteOnboardingInput = {
+  storeName: string;
+  storeCategory: string;
+  location: string;
+  logoUrl?: string;
+  primaryProductName: string;
+  primaryProductImageUrl: string;
+  extraProductImageUrls?: string[];
+};
+
 export type PublicStorePage = {
   id: string;
   slug: string;
   title: string;
   content: unknown;
+  sections?: Array<{ id: string; type: string; props: Record<string, unknown>; styles?: Record<string, string> }>;
+  templatePresetId?: string | null;
   isPublished: boolean;
   updatedAt: string;
 };
@@ -103,6 +128,48 @@ export type PublicStore = {
     contactEmail?: string;
     contactPhone?: string;
   } | null;
+};
+
+export type PublicStoreProduct = {
+  id: string;
+  storeId: string;
+  name: string;
+  slug: string | null;
+  description: string | null;
+  sku: string | null;
+  price: number;
+  comparePrice: number | null;
+  currency: string;
+  stock: number;
+  images: Array<{ id: string; url: string; isPrimary: boolean }>;
+  status: string;
+  isActive: boolean;
+  variants: Array<{ id: string; price: number; stock: number; isActive: boolean }>;
+};
+
+export type StoreSettings = {
+  storeId: string;
+  logoUrl: string | null;
+  faviconUrl: string | null;
+  primaryColor: string;
+  fontFamily: string;
+  navbarMenu: Array<{ label: string; url: string }>;
+  footerLinks: Array<{ label: string; url: string }>;
+  socialLinks: Record<string, string>;
+  landingTemplateId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ManagedStore = {
+  id: string;
+  slug: string;
+  name: string;
+  legalName: string | null;
+  status: "active" | "suspended" | "archived";
+  role: string;
+  isActive: boolean;
+  createdAt: string;
 };
 
 export type AdminProduct = {
@@ -351,6 +418,8 @@ export type AdminStorefrontPage = {
   slug: string;
   title: string;
   content: unknown;
+  sections: Array<{ id: string; type: string; props: Record<string, unknown>; styles?: Record<string, string> }>;
+  templatePresetId: string | null;
   isPublished: boolean;
   createdAt: string;
   updatedAt: string;
@@ -427,7 +496,28 @@ export const api = {
       firstName: string;
       lastName: string;
     }) =>
-      request<{ user: AuthUser }>("/auth/register", {
+      request<RegisterStartResult>("/auth/register", {
+        method: "POST",
+        body: data,
+      }),
+
+    verifyRegistration: (data: { email: string; code: string }) =>
+      request<{ user: AuthUser }>("/auth/register/verify", {
+        method: "POST",
+        body: data,
+      }),
+    resendRegistrationCode: (data: { email: string }) =>
+      request<RegisterStartResult>("/auth/register/resend", {
+        method: "POST",
+        body: data,
+      }),
+    completeOnboarding: (data: CompleteOnboardingInput) =>
+      request<{
+        user: AuthUser;
+        store: { id: string; slug: string; name: string };
+        page: { id: string; slug: string; isPublished: boolean };
+        generatedProductId: string;
+      }>("/auth/onboarding/complete", {
         method: "POST",
         body: data,
       }),
@@ -447,6 +537,15 @@ export const api = {
       request<{ user: AuthUser }>("/auth/active-store", {
         method: "POST",
         body: { storeId },
+      }),
+    startImpersonation: (data: { userId: string; storeId?: string }) =>
+      request<{ user: AuthUser }>("/auth/impersonation/start", {
+        method: "POST",
+        body: data,
+      }),
+    stopImpersonation: () =>
+      request<{ user: AuthUser }>("/auth/impersonation/stop", {
+        method: "POST",
       }),
   },
 
@@ -492,8 +591,46 @@ export const api = {
   },
 
   stores: {
+    listMine: () => request<{ stores: ManagedStore[] }>("/stores"),
+    create: (payload: {
+      name: string;
+      slug?: string;
+      legalName?: string;
+      settings?: Partial<Omit<StoreSettings, "storeId" | "createdAt" | "updatedAt">>;
+    }) => request<{ store: ManagedStore; user: AuthUser }>("/stores", { method: "POST", body: payload }),
+    update: (id: string, payload: { name?: string; slug?: string; legalName?: string | null }) =>
+      request<{ store: ManagedStore }>(`/stores/${id}`, { method: "PATCH", body: payload }),
+    archive: (id: string) =>
+      request<{ success: boolean; store: ManagedStore }>(`/stores/${id}`, { method: "DELETE" }),
+    switch: (id: string) =>
+      request<{ user: AuthUser }>(`/stores/${id}/switch`, { method: "POST" }),
+    getSettings: (id: string) =>
+      request<{ settings: StoreSettings }>(`/stores/${id}/settings`),
+    updateSettings: (
+      id: string,
+      payload: {
+        logoUrl?: string | null;
+        faviconUrl?: string | null;
+        primaryColor?: string;
+        fontFamily?: string;
+        navbarMenu?: Array<{ label: string; url: string }>;
+        footerLinks?: Array<{ label: string; url: string }>;
+        socialLinks?: Record<string, string>;
+        landingTemplateId?: string | null;
+      },
+    ) =>
+      request<{ settings: StoreSettings }>(`/stores/${id}/settings`, {
+        method: "PUT",
+        body: payload,
+      }),
     getPublic: (slug: string) =>
-      request<{ store: PublicStore; pages: PublicStorePage[] }>(`/stores/${slug}`),
+      request<{ store: PublicStore; settings: StoreSettings | null; pages: PublicStorePage[] }>(
+        `/stores/${slug}`,
+      ),
+    getPublicProducts: (slug: string, ids: string[]) =>
+      request<{ products: PublicStoreProduct[] }>(
+        `/stores/${slug}/products${ids.length ? `?ids=${encodeURIComponent(ids.join(","))}` : ""}`,
+      ),
   },
 
   account: {
@@ -747,13 +884,37 @@ export const api = {
         request<{ bucket: AdminMediaBucket }>("/admin/media/buckets", { method: "POST", body: payload }),
       listStorefrontImages: () =>
         request<{ assets: AdminMediaAsset[] }>("/admin/media/storefront-images"),
+      upload: (payload: {
+        fileName: string;
+        contentType: string;
+        dataBase64: string;
+        title?: string;
+        bucketId?: string;
+        isStorefront?: boolean;
+      }) =>
+        request<{ asset: AdminMediaAsset; url: string }>("/admin/media/upload", {
+          method: "POST",
+          body: payload,
+        }),
     },
     landing: {
       listPages: () => request<{ pages: AdminStorefrontPage[] }>("/admin/landing/pages"),
+      getPage: (id: string) => request<{ page: AdminStorefrontPage }>(`/admin/landing/pages/${id}`),
+      listTemplates: () =>
+        request<{ templates: Array<{ id: string; name: string; pageTitle: string }> }>(
+          "/admin/landing/templates",
+        ),
+      applyTemplate: (payload: { templateId: string; pageId?: string; slug?: string }) =>
+        request<{ page: AdminStorefrontPage }>("/admin/landing/templates/apply", {
+          method: "POST",
+          body: payload,
+        }),
       createPage: (payload: {
         slug: string;
         title: string;
         content?: unknown;
+        sections?: Array<{ id: string; type: string; props: Record<string, unknown>; styles?: Record<string, string> }>;
+        templatePresetId?: string | null;
         isPublished?: boolean;
       }) =>
         request<{ page: AdminStorefrontPage }>("/admin/landing/pages", { method: "POST", body: payload }),
@@ -763,6 +924,8 @@ export const api = {
           slug: string;
           title: string;
           content: unknown;
+          sections: Array<{ id: string; type: string; props: Record<string, unknown>; styles?: Record<string, string> }>;
+          templatePresetId: string | null;
           isPublished: boolean;
         }>,
       ) =>

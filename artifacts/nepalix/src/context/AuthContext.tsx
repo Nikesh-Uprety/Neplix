@@ -6,7 +6,7 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { ApiError, api, type AuthStore, type AuthUser } from "@/lib/api";
+import { ApiError, api, type AuthStore, type AuthUser, type RegisterStartResult } from "@/lib/api";
 
 type AuthContextType = {
   user: AuthUser | null;
@@ -20,11 +20,20 @@ type AuthContextType = {
     password: string;
     firstName: string;
     lastName: string;
-  }) => Promise<AuthUser>;
+  }) => Promise<RegisterStartResult>;
+  verifyRegistration: (data: { email: string; code: string }) => Promise<AuthUser>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<AuthUser | null>;
   listStores: () => Promise<AuthStore[]>;
   setActiveStore: (storeId: string) => Promise<AuthUser>;
+  startImpersonation: (userId: string, storeId?: string) => Promise<AuthUser>;
+  stopImpersonation: () => Promise<AuthUser>;
+  completeOnboarding: (data: Parameters<typeof api.auth.completeOnboarding>[0]) => Promise<{
+    user: AuthUser;
+    store: { id: string; slug: string; name: string };
+    page: { id: string; slug: string; isPublished: boolean };
+    generatedProductId: string;
+  }>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -61,7 +70,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       firstName: string;
       lastName: string;
     }) => {
-      const { user } = await api.auth.register(data);
+      return api.auth.register(data);
+    },
+    []
+  );
+
+  const verifyRegistration = useCallback(
+    async (data: { email: string; code: string }) => {
+      const { user } = await api.auth.verifyRegistration(data);
       setUser(user);
       return user;
     },
@@ -102,6 +118,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return user;
   }, []);
 
+  const startImpersonation = useCallback(async (userId: string, storeId?: string) => {
+    const { user } = await api.auth.startImpersonation({ userId, storeId });
+    setUser(user);
+    return user;
+  }, []);
+
+  const stopImpersonation = useCallback(async () => {
+    const { user } = await api.auth.stopImpersonation();
+    setUser(user);
+    return user;
+  }, []);
+
+  const completeOnboarding = useCallback(
+    async (data: Parameters<typeof api.auth.completeOnboarding>[0]) => {
+      const result = await api.auth.completeOnboarding(data);
+      setUser(result.user);
+      return result;
+    },
+    []
+  );
+
   const clearGoogleAuthError = useCallback(() => setGoogleAuthError(false), []);
 
   return (
@@ -114,10 +151,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearGoogleAuthError,
         login,
         register,
+        verifyRegistration,
         logout,
         refreshUser,
         listStores,
         setActiveStore,
+        startImpersonation,
+        stopImpersonation,
+        completeOnboarding,
       }}
     >
       {children}

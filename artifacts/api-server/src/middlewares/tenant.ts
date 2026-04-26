@@ -17,6 +17,9 @@ function normalizeHost(rawHost: string | undefined): string | null {
 }
 
 export function activeStoreId(req: AuthRequest): string | null {
+  if (req.session?.impersonatedStoreId) {
+    return req.session.impersonatedStoreId;
+  }
   return req.user?.activeStoreId ?? req.user?.storeId ?? null;
 }
 
@@ -32,9 +35,10 @@ export async function resolveTenantContext(
 
   try {
     const host = normalizeHost(req.headers.host);
-    let storeId = activeStoreId(req);
+    const impersonatedStoreId = req.session?.impersonatedStoreId ?? null;
+    let storeId = impersonatedStoreId ?? activeStoreId(req);
 
-    if (host) {
+    if (host && !impersonatedStoreId) {
       const [domain] = await db
         .select({ storeId: storeDomainsTable.storeId })
         .from(storeDomainsTable)

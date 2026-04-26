@@ -35,8 +35,12 @@ interface CheckoutData {
 
 export function compressCheckoutData(data: CheckoutData): string {
   const json = JSON.stringify(data);
-  const compressed = pako.deflate(json, { to: "string" });
-  return btoa(compressed);
+  const compressed = pako.deflate(json);
+  let binary = "";
+  for (const byte of compressed) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary);
 }
 
 export function generateCheckoutLink(data: CheckoutData, baseUrl: string): string {

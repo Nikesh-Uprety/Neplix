@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -6,8 +6,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Eye, EyeOff, AlertCircle, LogIn, UserPlus } from "lucide-react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
-import { googleAuthUrl } from "@/lib/api";
+import { api, googleAuthUrl } from "@/lib/api";
 import { getAuthenticatedHomeRoute } from "@/lib/portal-routing";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 function GoogleIcon() {
   return (
@@ -63,7 +64,12 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: Props) {
   const [mode, setMode] = useState<"login" | "register">(defaultMode);
   const [showPass, setShowPass] = useState(false);
   const [serverError, setServerError] = useState("");
-  const { login, register, googleAuthError, clearGoogleAuthError } = useAuth();
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [resendCooldownSeconds, setResendCooldownSeconds] = useState(0);
+  const [isResending, setIsResending] = useState(false);
+  const { login, register, verifyRegistration, googleAuthError, clearGoogleAuthError } = useAuth();
 
   function handleGoogleSignIn() {
     clearGoogleAuthError();
@@ -89,20 +95,62 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: Props) {
   async function handleRegister(data: RegisterValues) {
     setServerError("");
     try {
-      const user = await register(data);
+      const result = await register(data);
+      setVerificationEmail(result.email);
+      setVerificationCode("");
+      setResendCooldownSeconds(60);
+    } catch (e: unknown) {
+      setServerError(e instanceof Error ? e.message : "Registration failed");
+    }
+  }
+
+  async function handleVerifyRegistration() {
+    if (!verificationEmail) return;
+    setServerError("");
+    setIsVerifying(true);
+    try {
+      const user = await verifyRegistration({
+        email: verificationEmail,
+        code: verificationCode,
+      });
       onClose();
       setLocation(getAuthenticatedHomeRoute(user));
     } catch (e: unknown) {
-      setServerError(e instanceof Error ? e.message : "Registration failed");
+      setServerError(e instanceof Error ? e.message : "Verification failed");
+    } finally {
+      setIsVerifying(false);
+    }
+  }
+
+  async function handleResendCode() {
+    if (!verificationEmail || resendCooldownSeconds > 0) return;
+    setServerError("");
+    setIsResending(true);
+    try {
+      await api.auth.resendRegistrationCode({ email: verificationEmail });
+      setResendCooldownSeconds(60);
+    } catch (e: unknown) {
+      setServerError(e instanceof Error ? e.message : "Could not resend code");
+    } finally {
+      setIsResending(false);
     }
   }
 
   function switchMode(m: "login" | "register") {
     setMode(m);
     setServerError("");
+    setVerificationEmail("");
+    setVerificationCode("");
     loginForm.reset();
     registerForm.reset();
   }
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setResendCooldownSeconds((value) => (value > 0 ? value - 1 : 0));
+    }, 1000);
+    return () => clearInterval(t);
+  }, []);
 
   return (
     <AnimatePresence>
@@ -265,6 +313,77 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: Props) {
                       )}
                     </button>
                   </motion.form>
+                ) : verificationEmail ? (
+                  <motion.div
+                    key="verify-register"
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.15 }}
+                    className="space-y-4"
+                  >
+                    <div className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 p-3 text-xs text-cyan-200">
+                      Enter the 6-digit code sent to <strong>{verificationEmail}</strong>.
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Verification Code</label>
+                      <InputOTP
+                        maxLength={6}
+                        value={verificationCode}
+                        onChange={(value) => setVerificationCode(value.replace(/\D/g, "").slice(0, 6))}
+                        containerClassName="justify-center"
+                      >
+                        <InputOTPGroup>
+                          <InputOTPSlot index={0} />
+                          <InputOTPSlot index={1} />
+                          <InputOTPSlot index={2} />
+                          <InputOTPSlot index={3} />
+                          <InputOTPSlot index={4} />
+                          <InputOTPSlot index={5} />
+                        </InputOTPGroup>
+                      </InputOTP>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void handleVerifyRegistration()}
+                      disabled={isVerifying || verificationCode.length !== 6}
+                      className="w-full py-3 rounded-xl text-white font-semibold text-sm transition-all hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      style={{
+                        background: "linear-gradient(135deg, #06B6D4, #3B82F6)",
+                      }}
+                    >
+                      {isVerifying ? (
+                        <>
+                          <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Verifying...
+                        </>
+                      ) : (
+                        "Verify & Continue"
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleResendCode()}
+                      disabled={isResending || resendCooldownSeconds > 0}
+                      className="w-full py-2 rounded-xl border border-white/10 bg-white/5 text-white/80 text-sm hover:bg-white/10 transition-colors disabled:opacity-60"
+                    >
+                      {isResending
+                        ? "Resending..."
+                        : resendCooldownSeconds > 0
+                          ? `Resend code in ${resendCooldownSeconds}s`
+                          : "Resend verification code"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVerificationEmail("");
+                        setVerificationCode("");
+                      }}
+                      className="w-full py-2 rounded-xl border border-white/10 bg-white/5 text-white/80 text-sm hover:bg-white/10 transition-colors"
+                    >
+                      Use a different email
+                    </button>
+                  </motion.div>
                 ) : (
                   <motion.form
                     key="register"

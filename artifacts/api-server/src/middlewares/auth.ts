@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { db } from "@workspace/db";
-import { sessionsTable, usersTable } from "@workspace/db";
-import { eq, and, gt } from "drizzle-orm";
+import { impersonationAuditLogsTable, sessionsTable, usersTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 
 export interface AuthRequest extends Request {
   user?: typeof usersTable.$inferSelect;
+  session?: typeof sessionsTable.$inferSelect;
   sessionToken?: string;
 }
 
@@ -26,15 +27,44 @@ export async function authMiddleware(
     const [session] = await db
       .select()
       .from(sessionsTable)
-      .where(
-        and(
-          eq(sessionsTable.token, token),
-          gt(sessionsTable.expiresAt, new Date())
-        )
-      )
+      .where(eq(sessionsTable.token, token))
       .limit(1);
 
     if (!session) {
+      res.status(401).json({ error: "Session expired or invalid" });
+      return;
+    }
+
+    const now = new Date();
+    if (session.expiresAt <= now) {
+      if (
+        session.impersonatorUserId &&
+        session.impersonatedStoreId &&
+        session.impersonationExpiresAt &&
+        !session.impersonationEndedAt
+      ) {
+        await db.insert(impersonationAuditLogsTable).values({
+          sessionId: session.id,
+          actorUserId: session.impersonatorUserId,
+          targetUserId: session.userId,
+          storeId: session.impersonatedStoreId,
+          eventType: "impersonation_expired",
+          metadata: {
+            expiredAt: now.toISOString(),
+            reason: "timeout",
+          },
+        });
+        await db
+          .update(sessionsTable)
+          .set({
+            impersonationEndedAt: now,
+            impersonationEndReason: "timeout",
+          })
+          .where(eq(sessionsTable.id, session.id));
+      }
+      await db.delete(sessionsTable).where(eq(sessionsTable.id, session.id));
+      res.clearCookie("session_token", { path: "/", secure: true, sameSite: "none" });
+      res.clearCookie("impersonator_session_token", { path: "/", secure: true, sameSite: "none" });
       res.status(401).json({ error: "Session expired or invalid" });
       return;
     }
@@ -51,6 +81,7 @@ export async function authMiddleware(
     }
 
     req.user = user;
+    req.session = session;
     req.sessionToken = token;
     next();
   } catch (err) {

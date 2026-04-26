@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { AuthProvider } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 
 import Home from "@/pages/home";
 import Product from "@/pages/product";
@@ -41,6 +42,7 @@ import AdminImagesPage from "@/pages/admin/images";
 import AdminBucketsPage from "@/pages/admin/buckets";
 import AdminStorefrontImagesPage from "@/pages/admin/storefront-images";
 import AdminLandingPage from "@/pages/admin/landing-page";
+import AdminPageEditor from "@/pages/admin/page-editor";
 import AdminCanvasPage from "@/pages/admin/canvas";
 import AdminOrdersNewPage from "@/pages/admin/orders-new";
 import AdminProductsLayoutPage from "@/pages/admin/products-layout";
@@ -53,10 +55,11 @@ import Billing from "@/pages/billing";
 import BillingCallback from "@/pages/billing-callback";
 import AdminUsers from "@/pages/admin-users";
 import Checkout from "@/pages/checkout";
+import OnboardingPage from "@/pages/onboarding";
 
 const queryClient = new QueryClient();
 
-const FULLSCREEN_ROUTES = ["/dashboard", "/admin", "/billing", "/checkout", "/store"];
+const FULLSCREEN_ROUTES = ["/dashboard", "/admin", "/billing", "/checkout", "/store", "/onboarding"];
 
 function ScrollToTop() {
   const [location] = useLocation();
@@ -70,13 +73,32 @@ function ScrollToTop() {
 
 function AppShell({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const { user, stopImpersonation } = useAuth();
   const isFullscreen = FULLSCREEN_ROUTES.some(
     (r) => location === r || location.startsWith(r + "/")
   );
+  const impersonation = user?.impersonation;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#070B14]">
       <ScrollToTop />
+      {impersonation?.active && (
+        <div className="sticky top-0 z-[120] border-b border-amber-300/30 bg-amber-100 text-amber-900 px-4 py-2 text-sm">
+          <div className="mx-auto max-w-7xl flex items-center justify-between gap-3">
+            <span className="font-medium">
+              Impersonating store admin session. Expires at{" "}
+              {new Date(impersonation.expiresAt).toLocaleTimeString()}.
+            </span>
+            <button
+              type="button"
+              onClick={() => void stopImpersonation()}
+              className="rounded-md bg-amber-900 px-3 py-1.5 text-xs font-semibold text-amber-100 hover:bg-amber-950 transition-colors"
+            >
+              Return to platform
+            </button>
+          </div>
+        </div>
+      )}
       {!isFullscreen && <Navbar />}
       <main className="flex-1">{children}</main>
       {!isFullscreen && <Footer />}
@@ -99,7 +121,9 @@ function Router() {
       <Route path="/contact" component={Contact} />
       <Route path="/docs" component={Docs} />
       <Route path="/store/:slug" component={StorePreviewPage} />
+      <Route path="/store/:slug/:pageSlug" component={StorePreviewPage} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/onboarding" component={OnboardingPage} />
       <Route path="/account" component={AccountSettings} />
       <Route path="/admin" component={AdminIndex} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
@@ -130,6 +154,7 @@ function Router() {
       <Route path="/admin/platform/flags" component={AdminPlatformFeatureFlagsPage} />
       <Route path="/admin/platform/support" component={AdminPlatformSupportPage} />
       <Route path="/admin/landing-page" component={AdminLandingPage} />
+      <Route path="/admin/page-editor/:id" component={AdminPageEditor} />
       <Route path="/admin/canvas" component={AdminCanvasPage} />
       <Route path="/admin/canvas/legacy" component={AdminCanvasPage} />
       <Route path="/admin/canvas/builder" component={AdminCanvasPage} />
