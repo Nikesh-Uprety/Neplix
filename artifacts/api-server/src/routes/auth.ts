@@ -178,7 +178,7 @@ router.post("/register", async (req: Request, res: Response) => {
         .where(eq(emailVerificationCodesTable.email, normalizedEmail))
         .limit(1);
 
-      logger.info({ email: normalizedEmail }, "Email not configured - auto-creating verified user");
+logger.info({ email: normalizedEmail }, "Auto-creating verified user");
       const [user] = await db
         .insert(usersTable)
         .values({
@@ -197,47 +197,14 @@ router.post("/register", async (req: Request, res: Response) => {
           .where(eq(emailVerificationCodesTable.id, verification.id));
       }
 
-try {
-        await createTrialSubscription(user.id);
-      } catch (e) {
-        logger.warn({ err: e, userId: user.id }, "Failed to create trial subscription");
-      }
-
-      try {
-        await provisionStoreForUser({
-          userId: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-        });
-      } catch (e) {
-        logger.error({ err: e, userId: user.id }, "Failed to provision store - critical error");
-      }
-
-      const updatedUser = await db.select().from(usersTable).where(eq(usersTable.id, user.id)).limit(1);
-
-      if (!updatedUser[0]?.storeId || !updatedUser[0]?.activeStoreId) {
-        logger.error(
-          { userEmail: normalizedEmail, storeId: updatedUser[0]?.storeId, activeStoreId: updatedUser[0]?.activeStoreId },
-          "User still has no storeId after provisioning"
-        );
-        res.status(500).json({ error: "Failed to create store. Please contact support." });
-        return;
-      }
-
-      logger.info({ userId: updatedUser[0].id, storeId: updatedUser[0].storeId }, "User provisioned successfully");
-
-      try {
-        await sendWelcomeEmail({ to: user.email, firstName: user.firstName });
-      } catch (e) {
-        logger.warn({ err: e }, "Failed to send welcome email");
-      }
+      // Skip store provisioning for now - will create during onboarding
+      // try { await provisionStoreForUser({ userId: user.id, firstName: user.firstName, lastName: user.lastName, email: user.email }); } catch (e) { logger.error({ err: e }, "Failed to provision store"); }
 
       const token = randomBytes(32).toString("hex");
       const expiresAt = new Date(Date.now() + COOKIE_MAX_AGE);
       await db.insert(sessionsTable).values({ userId: user.id, token, expiresAt });
       setSessionCookie(res, token);
-      res.status(201).json({ user: toAuthUserResponse(updatedUser[0] ?? user) });
+      res.status(201).json({ user: toAuthUserResponse(user) });
       return;
     }
 
@@ -369,7 +336,7 @@ router.post("/register/verify", async (req: Request, res: Response) => {
     return;
   }
 
-  const [user] = await db
+const [user] = await db
     .insert(usersTable)
     .values({
       email: normalizedEmail,
@@ -385,47 +352,17 @@ router.post("/register/verify", async (req: Request, res: Response) => {
     .set({ consumedAt: new Date() })
     .where(eq(emailVerificationCodesTable.id, verification.id));
 
-try {
-        await createTrialSubscription(user.id);
-      } catch (e) {
-        logger.warn({ err: e, userId: user.id }, "Failed to create trial subscription");
-      }
+  const token = randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + COOKIE_MAX_AGE);
 
-      try {
-        await provisionStoreForUser({
-          userId: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-        });
-      } catch (e) {
-        logger.error({ err: e, userId: user.id }, "Failed to provision store for user - critical error");
-      }
+  await db.insert(sessionsTable).values({
+    userId: user.id,
+    token,
+    expiresAt,
+  });
 
-      const updatedUser = await db.select().from(usersTable).where(eq(usersTable.id, user.id)).limit(1);
-      if (!updatedUser[0]?.storeId || !updatedUser[0]?.activeStoreId) {
-        logger.error({ user: updatedUser[0] }, "User still has no store after provisioning");
-      } else {
-        logger.info({ userId: updatedUser[0].id, storeId: updatedUser[0].storeId }, "User provisioned successfully");
-      }
-
-      try {
-        await sendWelcomeEmail({ to: user.email, firstName: user.firstName });
-      } catch (e) {
-        logger.warn({ err: e }, "Failed to send welcome email");
-      }
-
-      const token = randomBytes(32).toString("hex");
-      const expiresAt = new Date(Date.now() + COOKIE_MAX_AGE);
-
-      await db.insert(sessionsTable).values({
-        userId: user.id,
-        token,
-        expiresAt,
-      });
-
-      setSessionCookie(res, token);
-      res.status(201).json({ user: toAuthUserResponse(updatedUser[0] ?? user) });
+  setSessionCookie(res, token);
+  res.status(201).json({ user: toAuthUserResponse(user) });
 });
 
 const onboardingSchema = z.object({
@@ -446,7 +383,33 @@ router.post("/onboarding/complete", authMiddleware, async (req: AuthRequest, res
   }
 
   const user = req.user!;
-  const storeId = user.activeStoreId ?? user.storeId;
+  let storeId = user.activeStoreId ?? user.storeId;
+
+  // If user has no store, create one first
+  if (!storeId) {
+    logger.info({ userId: user.id }, "Creating store for user during onboarding");
+    try {
+      const result = await provisionStoreForUser({
+        userId: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+      });
+      storeId = result.storeId;
+      
+      // Refresh user to get updated storeId
+      const [updatedUser] = await db.select().from(usersTable).where(eq(usersTable.id, user.id)).limit(1);
+      if (updatedUser) {
+        req.user = updatedUser;
+        storeId = updatedUser.activeStoreId ?? updatedUser.storeId;
+      }
+    } catch (e) {
+      logger.error({ err: e, userId: user.id }, "Failed to create store during onboarding");
+      res.status(500).json({ error: "Failed to create store. Please try again." });
+      return;
+    }
+  }
+
   if (!storeId) {
     res.status(400).json({ error: "No active store selected for onboarding" });
     return;
