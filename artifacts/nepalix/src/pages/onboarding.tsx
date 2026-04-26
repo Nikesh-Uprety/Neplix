@@ -16,6 +16,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { api } from "@/lib/api";
 
 type Step = 0 | 1 | 2 | 3;
 
@@ -30,8 +31,8 @@ const CATEGORIES = [
   "Other",
 ];
 
-function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
+async function uploadFile(file: File): Promise<string> {
+  const dataUrl: string = await new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === "string") resolve(reader.result);
@@ -40,6 +41,10 @@ function fileToDataUrl(file: File): Promise<string> {
     reader.onerror = () => reject(reader.error ?? new Error("Could not read file"));
     reader.readAsDataURL(file);
   });
+  const [meta, dataBase64] = dataUrl.split(",");
+  const contentType = meta.replace("data:", "").replace(";base64", "");
+  const result = await api.auth.uploadOnboardingImage({ fileName: file.name, contentType, dataBase64 });
+  return result.url;
 }
 
 export default function OnboardingPage() {
@@ -74,20 +79,35 @@ export default function OnboardingPage() {
 
   async function onLogoFile(file: File | null) {
     if (!file) return;
-    const url = await fileToDataUrl(file);
-    setLogoUrl(url);
+    setError("");
+    try {
+      const url = await uploadFile(file);
+      setLogoUrl(url);
+    } catch {
+      setError("Logo upload failed. Please try again.");
+    }
   }
 
   async function onPrimaryProductFile(file: File | null) {
     if (!file) return;
-    const url = await fileToDataUrl(file);
-    setPrimaryProductImageUrl(url);
+    setError("");
+    try {
+      const url = await uploadFile(file);
+      setPrimaryProductImageUrl(url);
+    } catch {
+      setError("Product image upload failed. Please try again.");
+    }
   }
 
   async function onExtraProductFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
-    const urls = await Promise.all(Array.from(files).slice(0, 4).map((file) => fileToDataUrl(file)));
-    setExtraProductImageUrls((prev) => [...prev.filter((v) => v.trim().length > 0), ...urls]);
+    setError("");
+    try {
+      const urls = await Promise.all(Array.from(files).slice(0, 4).map((file) => uploadFile(file)));
+      setExtraProductImageUrls((prev) => [...prev.filter((v) => v.trim().length > 0), ...urls]);
+    } catch {
+      setError("Some images failed to upload. Please try again.");
+    }
   }
 
   function next() {
@@ -104,12 +124,12 @@ export default function OnboardingPage() {
         return;
       }
     }
-    setStep((s) => Math.min(3, (s + 1) as Step));
+    setStep((s) => (Math.min(3, s + 1) as Step));
   }
 
   function back() {
     setError("");
-    setStep((s) => Math.max(0, (s - 1) as Step));
+    setStep((s) => (Math.max(0, s - 1) as Step));
   }
 
   async function publishAndGoLive() {

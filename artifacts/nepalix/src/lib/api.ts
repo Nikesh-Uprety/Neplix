@@ -511,6 +511,12 @@ export const api = {
         method: "POST",
         body: data,
       }),
+    uploadOnboardingImage: (data: { fileName: string; contentType: string; dataBase64: string }) =>
+      request<{ url: string }>("/auth/onboarding/upload", {
+        method: "POST",
+        body: data,
+      }),
+
     completeOnboarding: (data: CompleteOnboardingInput) =>
       request<{
         user: AuthUser;

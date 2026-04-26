@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { createHash, randomBytes, randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { uploadMediaAsset } from "../lib/media-upload.js";
 import { db } from "@workspace/db";
 import {
   emailVerificationCodesTable,
@@ -364,6 +365,34 @@ const [user] = await db
 
   setSessionCookie(res, token);
   res.status(201).json({ user: toAuthUserResponse(user) });
+});
+
+const onboardingUploadSchema = z.object({
+  fileName: z.string().min(1).max(255),
+  contentType: z.string().regex(/^image\/(jpeg|png|webp|gif|svg\+xml)$/),
+  dataBase64: z.string().min(1),
+});
+
+router.post("/onboarding/upload", authMiddleware, async (req: AuthRequest, res: Response) => {
+  const parsed = onboardingUploadSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid upload payload", details: parsed.error.flatten() });
+    return;
+  }
+  const user = req.user!;
+  const storeId = user.activeStoreId ?? user.storeId ?? `onboarding-${user.id}`;
+  try {
+    const uploaded = await uploadMediaAsset({
+      storeId,
+      fileName: parsed.data.fileName,
+      contentType: parsed.data.contentType,
+      dataBase64: parsed.data.dataBase64,
+    });
+    res.status(201).json({ url: uploaded.url });
+  } catch (e) {
+    logger.error({ err: e, userId: user.id }, "Failed to upload onboarding image");
+    res.status(500).json({ error: "Image upload failed" });
+  }
 });
 
 const onboardingSchema = z.object({
