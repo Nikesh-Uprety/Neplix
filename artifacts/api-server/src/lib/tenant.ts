@@ -1,13 +1,12 @@
 import {
   db,
-  plansTable,
   storeDomainsTable,
   storeMembershipsTable,
   storesTable,
-  storeSubscriptionsTable,
   usersTable,
 } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { logger } from "./logger.js";
 
 function slugify(input: string): string {
   return input
@@ -39,65 +38,50 @@ export async function provisionStoreForUser(args: {
   lastName: string;
   email: string;
 }): Promise<{ storeId: string; storeSlug: string }> {
-  const displayName = `${args.firstName} ${args.lastName}`.trim() || args.email;
-  const storeSlug = await nextUniqueStoreSlug(displayName);
-  const storeName = `${displayName}'s Store`;
+  try {
+    const displayName = `${args.firstName} ${args.lastName}`.trim() || args.email;
+    const storeSlug = await nextUniqueStoreSlug(displayName);
+    const storeName = `${displayName}'s Store`;
 
-  const [store] = await db
-    .insert(storesTable)
-    .values({
-      slug: storeSlug,
-      name: storeName,
-      legalName: storeName,
-      createdByUserId: args.userId,
-      planCode: "free",
-      settings: { currency: "NPR", locale: "en-NP", timezone: "Asia/Kathmandu" },
-    })
-    .returning({ id: storesTable.id, slug: storesTable.slug });
+    logger.info({ userId: args.userId, storeSlug }, "Creating store for user");
 
-  await db.insert(storeMembershipsTable).values({
-    storeId: store.id,
-    userId: args.userId,
-    role: "owner",
-    status: "active",
-  });
+    const [store] = await db
+      .insert(storesTable)
+      .values({
+        slug: storeSlug,
+        name: storeName,
+        legalName: storeName,
+        createdByUserId: args.userId,
+        planCode: "free",
+        settings: { currency: "NPR", locale: "en-NP", timezone: "Asia/Kathmandu" },
+      })
+      .returning({ id: storesTable.id, slug: storesTable.slug });
 
-  await db
-    .update(usersTable)
-    .set({
+    logger.info({ storeId: store.id }, "Store created, adding membership");
+
+    await db.insert(storeMembershipsTable).values({
       storeId: store.id,
-      activeStoreId: store.id,
-      updatedAt: new Date(),
-    })
-    .where(eq(usersTable.id, args.userId));
-
-  const rootDomain = process.env.TENANT_ROOT_DOMAIN?.trim();
-  if (rootDomain) {
-    const hostname = `${storeSlug}.${rootDomain}`;
-    await db.insert(storeDomainsTable).values({
-      storeId: store.id,
-      hostname,
-      isPrimary: true,
-      isVerified: false,
-    });
-  }
-
-  const [freePlan] = await db
-    .select({ id: plansTable.id })
-    .from(plansTable)
-    .where(eq(plansTable.slug, "free"))
-    .limit(1);
-  if (freePlan) {
-    await db.insert(storeSubscriptionsTable).values({
-      storeId: store.id,
-      planId: freePlan.id,
+      userId: args.userId,
+      role: "owner",
       status: "active",
-      billingCycle: "yearly",
-      currentPeriodStart: new Date(),
     });
-  } else {
-    logger.warn({ storeId: store.id }, "Free plan not found, skipping subscription");
-  }
 
-  return { storeId: store.id, storeSlug: store.slug };
+    logger.info({ storeId: store.id, userId: args.userId }, "Updating user with storeId");
+
+    await db
+      .update(usersTable)
+      .set({
+        storeId: store.id,
+        activeStoreId: store.id,
+        updatedAt: new Date(),
+      })
+      .where(eq(usersTable.id, args.userId));
+
+    logger.info({ storeId: store.id, userId: args.userId }, "User updated with storeId - provisioning complete");
+
+    return { storeId: store.id, storeSlug: store.slug };
+  } catch (err) {
+    logger.error({ err, userId: args.userId }, "Failed to provision store");
+    throw err;
+  }
 }
