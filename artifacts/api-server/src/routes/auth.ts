@@ -8,6 +8,7 @@ import {
   impersonationAuditLogsTable,
   productImagesTable,
   productsTable,
+  subscriptionsTable,
   usersTable,
   sessionsTable,
   storefrontPagesTable,
@@ -588,6 +589,20 @@ router.post("/onboarding/complete", authMiddleware, async (req: AuthRequest, res
     })
     .where(eq(usersTable.id, user.id))
     .returning();
+
+  // Auto-start 14-day trial if user has no subscription yet
+  const [existingSub] = await db
+    .select({ id: subscriptionsTable.id })
+    .from(subscriptionsTable)
+    .where(eq(subscriptionsTable.userId, user.id))
+    .limit(1);
+  if (!existingSub) {
+    try {
+      await createTrialSubscription(user.id);
+    } catch (e) {
+      logger.warn({ err: e, userId: user.id }, "Could not auto-start trial during onboarding");
+    }
+  }
 
   res.json({
     user: toAuthUserResponse(updatedUser, req.session),

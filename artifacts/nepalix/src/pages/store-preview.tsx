@@ -49,7 +49,10 @@ export default function StorePreviewPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F8F8F7] text-[#6B7280]">
-        Loading storefront preview…
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[#111827]/20 border-t-[#111827] rounded-full animate-spin" />
+          <p className="text-sm">Loading storefront…</p>
+        </div>
       </div>
     );
   }
@@ -58,7 +61,9 @@ export default function StorePreviewPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F8F8F7] px-6">
         <div className="max-w-lg rounded-2xl border border-[#E5E7EB] bg-white p-8 text-center shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#9CA3AF]">Store not found</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#9CA3AF]">
+            Store not found
+          </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#111827]">
             We couldn&apos;t find this storefront
           </h1>
@@ -76,6 +81,10 @@ export default function StorePreviewPage() {
     );
   }
 
+  // Extract category from store.settings JSONB (set during onboarding)
+  const storeSettingsJson = store.settings as Record<string, unknown> | null;
+  const category = (storeSettingsJson?.category as string | undefined) ?? null;
+
   const activePage =
     pages.find((page) => page.slug === (pageSlug || "home")) ??
     pages.find((page) => page.slug === "home") ??
@@ -84,10 +93,10 @@ export default function StorePreviewPage() {
 
   if (!activePage) {
     return (
-      <StoreLayout storeName={store.name} settings={settings}>
+      <StoreLayout storeName={store.name} settings={settings} category={category}>
         <div className="max-w-5xl mx-auto px-4 py-16">
           <h1 className="text-3xl font-semibold mb-2">{store.name}</h1>
-          <p className="text-gray-400">No published pages yet for this storefront.</p>
+          <p className="opacity-50">No published pages yet for this storefront.</p>
         </div>
       </StoreLayout>
     );
@@ -96,18 +105,16 @@ export default function StorePreviewPage() {
   const sections = (activePage.sections ?? []) as SectionData[];
 
   return (
-    <StoreLayout storeName={store.name} settings={settings}>
-      <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-        {sections.length > 0 ? (
-          sections.map((section) => (
-            <SectionRenderer key={section.id} section={section} storeSlug={store.slug} />
-          ))
-        ) : (
-          <div className="rounded-2xl border border-white/10 p-8 bg-[#0B1020] text-gray-300">
-            This page has no sections yet. Open admin page editor to add content.
-          </div>
-        )}
-      </div>
+    <StoreLayout storeName={store.name} settings={settings} category={category}>
+      {sections.length > 0 ? (
+        sections.map((section) => (
+          <SectionRenderer key={section.id} section={section} storeSlug={store.slug} />
+        ))
+      ) : (
+        <div className="max-w-5xl mx-auto px-4 py-16 text-center opacity-50">
+          This page has no sections yet.
+        </div>
+      )}
     </StoreLayout>
   );
 }

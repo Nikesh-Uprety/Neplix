@@ -23,9 +23,11 @@ router.use(authMiddleware);
 
 const PLAN_SLUGS: readonly PlanSlug[] = [
   "free",
+  "base",
   "starter",
-  "business",
-  "enterprise",
+  "growth",
+  "pro",
+  "elite",
 ] as const;
 
 const providerSchema = z.enum(["khalti", "esewa"]);

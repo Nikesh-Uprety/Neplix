@@ -54,8 +54,8 @@ export function ImageTextSection({
   }
 
   return (
-    <section className="grid md:grid-cols-2 gap-6 rounded-2xl border border-white/10 p-6 bg-white/[0.02]">
-      <div className={`relative rounded-xl bg-[#0F172A] border border-white/10 overflow-hidden ${ratioClass}`}>
+    <section className="py-12 px-4 max-w-7xl mx-auto grid md:grid-cols-2 gap-8 items-center">
+      <div className={`relative rounded-2xl bg-black/5 border border-black/8 overflow-hidden shadow-sm ${ratioClass}`}>
         {isEditing && (
           <div className="absolute pointer-events-none inset-1 border border-dashed border-white/30 rounded-lg" />
         )}
@@ -67,7 +67,7 @@ export function ImageTextSection({
           )}
         </a>
       </div>
-      <div className="text-gray-200">
+      <div className="opacity-80">
         {isEditing && (
           <div className="space-y-2 mb-3">
             <div className="flex flex-wrap items-center gap-2">

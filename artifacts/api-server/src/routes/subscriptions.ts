@@ -59,6 +59,43 @@ router.post("/cancel", async (req: SubscriptionRequest, res: Response) => {
   res.json({ success: true });
 });
 
+router.post("/trial", async (req: SubscriptionRequest, res: Response) => {
+  if (req.subscription && req.subscription.status !== "trialing") {
+    res.status(409).json({ error: "Already on an active subscription" });
+    return;
+  }
+  const { planSlug } = req.body as { planSlug: string };
+  if (!planSlug) {
+    res.status(400).json({ error: "planSlug is required" });
+    return;
+  }
+  const [plan] = await db.select().from(plansTable).where(eq(plansTable.slug, planSlug)).limit(1);
+  if (!plan) {
+    res.status(404).json({ error: "Plan not found" });
+    return;
+  }
+  const trialDays = Number(process.env.TRIAL_DAYS ?? 14);
+  const now = new Date();
+  const trialEndsAt = new Date(now.getTime() + trialDays * 86400_000);
+  if (req.subscription) {
+    await db
+      .update(subscriptionsTable)
+      .set({ planId: plan.id, trialEndsAt, currentPeriodEnd: trialEndsAt, updatedAt: now })
+      .where(eq(subscriptionsTable.id, req.subscription.id));
+  } else {
+    await db.insert(subscriptionsTable).values({
+      userId: req.user!.id,
+      planId: plan.id,
+      status: "trialing",
+      trialStartedAt: now,
+      trialEndsAt,
+      currentPeriodStart: now,
+      currentPeriodEnd: trialEndsAt,
+    });
+  }
+  res.json({ success: true });
+});
+
 export async function createTrialSubscription(userId: string): Promise<void> {
   const trialDays = Number(process.env.TRIAL_DAYS ?? 14);
   const [freePlan] = await db

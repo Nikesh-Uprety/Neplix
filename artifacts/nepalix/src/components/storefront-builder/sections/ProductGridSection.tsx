@@ -58,9 +58,9 @@ export function ProductGridSection({
   }, [isEditing, productIds.join(","), storeSlug]);
 
   return (
-    <section className="rounded-2xl border border-white/10 p-6 bg-white/[0.02]">
+    <section className="py-12 px-4 max-w-7xl mx-auto">
       <h2
-        className="text-2xl text-white font-semibold mb-4 outline-none"
+        className="text-2xl font-bold mb-6 outline-none"
         contentEditable={Boolean(isEditing)}
         suppressContentEditableWarning
         onBlur={(e) => onUpdate?.({ ...data.props, title: e.currentTarget.textContent ?? "" })}
@@ -116,12 +116,16 @@ export function ProductGridSection({
         {isEditing || !storeSlug
           ? productIds.length === 0
           ? [0, 1, 2].map((i) => (
-              <div key={i} className="rounded-xl border border-white/10 p-4 bg-[#0B1020] text-gray-400 text-sm">
-                Product placeholder
+              <div key={i} className="rounded-2xl border border-black/10 bg-black/5 overflow-hidden">
+                <div className="aspect-square bg-black/5 animate-pulse" />
+                <div className="p-4 space-y-2">
+                  <div className="h-3 rounded bg-black/10 w-2/3 animate-pulse" />
+                  <div className="h-3 rounded bg-black/8 w-1/3 animate-pulse" />
+                </div>
               </div>
             ))
           : productIds.map((id) => (
-              <div key={id} className="rounded-xl border border-white/10 p-4 bg-[#0B1020] text-gray-300 text-sm">
+              <div key={id} className="rounded-2xl border border-black/10 p-4 bg-black/5 text-sm opacity-60">
                 Product ID: {id}
               </div>
             ))
@@ -131,19 +135,27 @@ export function ProductGridSection({
               const image = product.images.find((img) => img.isPrimary) ?? product.images[0];
               const link = productLinks[productIds.indexOf(product.id)] ?? "#";
               return (
-                <div key={product.id} className="rounded-xl border border-white/10 bg-[#0B1020] overflow-hidden">
-                  <a href={link} className="block h-44 bg-black/20">
+                <a
+                  key={product.id}
+                  href={link}
+                  className="group rounded-2xl overflow-hidden border border-black/8 bg-white/60 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
+                >
+                  <div className="aspect-square bg-black/5 overflow-hidden">
                     {image ? (
-                      <img src={image.url} alt={product.name} className="h-full w-full object-cover" />
+                      <img
+                        src={image.url}
+                        alt={product.name}
+                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
                     ) : (
-                      <div className="h-full w-full grid place-items-center text-gray-500 text-sm">No image</div>
+                      <div className="h-full w-full grid place-items-center opacity-30 text-sm">No image</div>
                     )}
-                  </a>
-                  <div className="p-4">
-                    <p className="text-sm text-white font-medium">{product.name}</p>
-                    <p className="text-cyan-300 text-sm">{formatNpr(displayPrice)}</p>
                   </div>
-                </div>
+                  <div className="p-4">
+                    <p className="text-sm font-semibold">{product.name}</p>
+                    <p className="text-sm opacity-70 mt-0.5">{formatNpr(displayPrice)}</p>
+                  </div>
+                </a>
               );
             })}
       </div>

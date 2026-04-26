@@ -10,9 +10,11 @@ import {
 
 export type PlanSlug =
   | "free"
+  | "base"
   | "starter"
-  | "business"
-  | "enterprise";
+  | "growth"
+  | "pro"
+  | "elite";
 
 export type PlanFeatures = {
   ordersPerYear: number | null;

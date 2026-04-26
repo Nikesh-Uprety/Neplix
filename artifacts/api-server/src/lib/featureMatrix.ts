@@ -16,8 +16,23 @@ export const FEATURE_MATRIX: Record<PlanSlug, PlanFeatures> = {
     customIntegrations: false,
     dedicatedManager: false,
   },
+  base: {
+    ordersPerYear: 6000,
+    products: 50,
+    staff: 1,
+    locations: 1,
+    pos: false,
+    advancedInventory: false,
+    abandonedCart: false,
+    funnelBuilder: false,
+    upsellCrossSell: false,
+    analyticsLevel: "basic",
+    prioritySupport: false,
+    customIntegrations: false,
+    dedicatedManager: false,
+  },
   starter: {
-    ordersPerYear: 1000,
+    ordersPerYear: 10000,
     products: 100,
     staff: 2,
     locations: 1,
@@ -31,7 +46,7 @@ export const FEATURE_MATRIX: Record<PlanSlug, PlanFeatures> = {
     customIntegrations: false,
     dedicatedManager: false,
   },
-  business: {
+  growth: {
     ordersPerYear: 20000,
     products: 1000,
     staff: 8,
@@ -46,7 +61,7 @@ export const FEATURE_MATRIX: Record<PlanSlug, PlanFeatures> = {
     customIntegrations: false,
     dedicatedManager: false,
   },
-  enterprise: {
+  pro: {
     ordersPerYear: 50000,
     products: 2500,
     staff: 25,
@@ -60,6 +75,21 @@ export const FEATURE_MATRIX: Record<PlanSlug, PlanFeatures> = {
     prioritySupport: true,
     customIntegrations: false,
     dedicatedManager: false,
+  },
+  elite: {
+    ordersPerYear: null,
+    products: null,
+    staff: 50,
+    locations: null,
+    pos: true,
+    advancedInventory: true,
+    abandonedCart: true,
+    funnelBuilder: true,
+    upsellCrossSell: true,
+    analyticsLevel: "enterprise",
+    prioritySupport: true,
+    customIntegrations: true,
+    dedicatedManager: true,
   },
 };
 
@@ -79,7 +109,7 @@ export function hasFeature(
 }
 
 export function minimumPlanFor(feature: FeatureKey): PlanSlug | null {
-  const order: PlanSlug[] = ["free", "starter", "business", "enterprise"];
+  const order: PlanSlug[] = ["free", "base", "starter", "growth", "pro", "elite"];
   for (const slug of order) {
     if (hasFeature(slug, feature)) return slug;
   }

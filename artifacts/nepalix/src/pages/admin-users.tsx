@@ -19,6 +19,7 @@ import { api, type AdminUser } from "@/lib/api";
 import { GlassCard } from "@/components/ui-custom/GlassCard";
 import { useToast } from "@/hooks/use-toast";
 import { getAdminHomeRoute } from "@/lib/portal-routing";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 const ADMIN_PANEL_ROLES = [
   "superadmin",
@@ -154,8 +155,8 @@ export default function AdminUsers() {
 
   if (!hasAdminAccess) {
     return (
-      <div className="pt-24 min-h-[100dvh] bg-[#070B14]">
-        <div className="max-w-2xl mx-auto px-4 pb-16">
+      <AdminLayout title="Staff & Roles" subtitle="Manage user roles and permissions">
+        <div className="max-w-2xl">
           <GlassCard className="text-center py-12">
             <div className="w-14 h-14 rounded-2xl bg-red-500/15 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
               <ShieldAlert className="w-7 h-7 text-red-400" />
@@ -176,43 +177,28 @@ export default function AdminUsers() {
             </Link>
           </GlassCard>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="pt-24 min-h-[100dvh] bg-[#070B14]">
-      <div className="max-w-7xl mx-auto px-4 pb-16">
-        <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-          <div>
-            <Link
-              href={getAdminHomeRoute(user)}
-              className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-3"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Admin
-            </Link>
-            <h1 className="text-3xl font-bold text-white font-heading">
-              Admin · Users
-            </h1>
-            <p className="text-gray-400">
-              Manage user roles and admin page access overrides
-            </p>
-          </div>
-
-          <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search by name or email..."
-              className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/10 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-cyan-400/40 focus:bg-white/[0.05] transition-all"
-            />
-          </div>
+    <AdminLayout
+      title="Staff & Roles"
+      subtitle="Manage user roles and admin page access overrides"
+      actions={
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search by name or email..."
+            className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/10 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-cyan-400/40 focus:bg-white/[0.05] transition-all"
+          />
         </div>
-
-        {usersQuery.isError && (
+      }
+    >
+      {usersQuery.isError && (
           <div className="mb-6 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
             {(usersQuery.error as Error)?.message ?? "Failed to load users"}
           </div>
@@ -378,7 +364,6 @@ export default function AdminUsers() {
             </div>
           )}
         </GlassCard>
-      </div>
 
       <AnimatePresence>
         {editing && (
@@ -398,7 +383,7 @@ export default function AdminUsers() {
           />
         )}
       </AnimatePresence>
-    </div>
+    </AdminLayout>
   );
 }
 

@@ -78,6 +78,13 @@ router.get(
     }
     const { q, limit, offset } = parsed.data;
 
+    const isSuperadmin = normalizeAdminRole(req.user?.role) === "superadmin";
+    const actorStoreId = req.user?.activeStoreId ?? req.user?.storeId ?? null;
+
+    const storeCondition = (!isSuperadmin && actorStoreId)
+      ? eq(usersTable.storeId, actorStoreId)
+      : undefined;
+
     const searchCondition = q
       ? or(
           ilike(usersTable.email, `%${q}%`),
@@ -85,6 +92,10 @@ router.get(
           ilike(usersTable.lastName, `%${q}%`),
         )
       : undefined;
+
+    const whereCondition = storeCondition && searchCondition
+      ? and(storeCondition, searchCondition)
+      : storeCondition ?? searchCondition;
 
     const rowsQuery = db
       .select({
@@ -109,8 +120,8 @@ router.get(
       .from(usersTable);
 
     const [rows, totalRows] = await Promise.all([
-      searchCondition ? rowsQuery.where(searchCondition) : rowsQuery,
-      searchCondition ? countQuery.where(searchCondition) : countQuery,
+      whereCondition ? rowsQuery.where(whereCondition) : rowsQuery,
+      whereCondition ? countQuery.where(whereCondition) : countQuery,
     ]);
 
     res.json({

@@ -662,6 +662,8 @@ export const api = {
     current: () => request<{ subscription: CurrentSubscription }>("/subscriptions/current"),
     payments: () => request<{ payments: Payment[] }>("/subscriptions/payments"),
     cancel: () => request<{ success: boolean }>("/subscriptions/cancel", { method: "POST" }),
+    startTrial: (planSlug: string) =>
+      request<{ success: boolean }>("/subscriptions/trial", { method: "POST", body: { planSlug } }),
   },
 
   payments: {
