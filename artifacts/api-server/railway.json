@@ -12,7 +12,12 @@
       "NEON_DATABASE_URL": "postgresql://neondb_owner:npg_UNZMsT1QE7KY@ep-floral-sea-a1yth453-pooler.ap-southeast-1.aws.neon.tech/nepalix?sslmode=require&channel_binding=disable",
       "SESSION_SECRET": "nepalix-super-secret-key-change-this-to-something-long-and-random-2024",
       "GOOGLE_REDIRECT_URI": "https://neplix-production.up.railway.app/api/auth/google/callback",
-      "FRONTEND_URL": "https://nepalix.vercel.app"
+      "FRONTEND_URL": "https://nepalix.vercel.app",
+      "SMTP_HOST": "smtp.gmail.com",
+      "SMTP_PORT": "587",
+      "SMTP_USER": "",
+      "SMTP_PASS": "",
+      "SMTP_FROM": "Nepalix <noreply@nepalix.com>"
     }
   }
 }
